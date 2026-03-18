@@ -1,0 +1,130 @@
+# Aetherion — Cursor Rules
+
+## Project Overview
+Aetherion (RetirementOS) — AI operating system for retirement and pension decisions in regulated financial institutions. Starting with Swedish occupational pension advisory workflows.
+
+## Tech Stack
+- **Backend:** Python 3.11+ / FastAPI
+- **Frontend (prototype):** v0.dev (Vercel) — full Workbench UI prototyped here first
+- **Frontend (production):** Next.js 14+ (App Router) / React / TypeScript — migrated from v0
+- **Database:** PostgreSQL + pgvector
+- **UI:** shadcn/ui + Tailwind CSS (v0 uses these by default)
+- **Auth:** WorkOS
+- **LLM:** Anthropic Claude API
+- **Doc generation:** python-docx, WeasyPrint, Jinja2
+- **Infra:** Docker, Azure
+
+## Frontend Strategy
+The Workbench UI is being prototyped in v0.dev, then migrated into the repo. This means:
+- Backend API design is the priority — make endpoints clean and well-documented so v0 can consume them
+- When working on backend, always define clear Pydantic response schemas (these become the API contract for the frontend)
+- The frontend/ directory will be populated when we migrate from v0
+- For now, Cursor focus is on backend code, API endpoints, and database work
+
+## Project Structure
+```
+aetherion/
+├── backend/
+│   ├── app/
+│   │   ├── main.py              # FastAPI app entry
+│   │   ├── api/                 # Route handlers
+│   │   │   ├── cases.py
+│   │   │   ├── recommendations.py
+│   │   │   ├── compliance.py
+│   │   │   ├── knowledge.py
+│   │   │   └── workflows.py
+│   │   ├── core/                # Config, security, dependencies
+│   │   ├── models/              # SQLAlchemy / Pydantic models
+│   │   ├── services/            # Business logic
+│   │   │   ├── reasoner.py      # LLM reasoning engine
+│   │   │   ├── memory.py        # RAG / knowledge retrieval
+│   │   │   ├── control.py       # Compliance checks
+│   │   │   ├── flow.py          # Workflow orchestration
+│   │   │   └── docgen.py        # Document generation
+│   │   ├── prompts/             # LLM prompt templates
+│   │   └── db/                  # Database migrations, session
+│   ├── tests/
+│   └── requirements.txt
+├── frontend/
+│   ├── src/
+│   │   ├── app/                 # Next.js App Router pages
+│   │   ├── components/          # React components
+│   │   │   ├── ui/              # shadcn/ui components
+│   │   │   ├── workbench/       # Case workspace components
+│   │   │   ├── reasoner/        # Reasoning display components
+│   │   │   └── common/          # Shared components
+│   │   ├── lib/                 # Utilities, API client, hooks
+│   │   ├── types/               # TypeScript type definitions
+│   │   └── styles/              # Global styles
+│   ├── public/
+│   └── package.json
+├── docker-compose.yml
+├── .env.example
+└── docs/                        # Architecture decision records
+```
+
+## Coding Conventions
+
+### Python (Backend)
+- Use type hints everywhere
+- Pydantic models for all request/response schemas
+- Async functions for all API endpoints
+- Service layer pattern: routes → services → database
+- Never put business logic in route handlers
+- Use dependency injection via FastAPI Depends()
+- Logging with structlog
+- All database queries through SQLAlchemy async sessions
+- Alembic for migrations
+
+### TypeScript (Frontend)
+- Strict TypeScript — no `any` types
+- Functional components only, no class components
+- Custom hooks for shared logic (prefix with `use`)
+- Colocate component files: Component.tsx, Component.test.tsx
+- Use React Query (TanStack Query) for server state
+- Zustand for client state (only if needed)
+- Import shadcn/ui components from @/components/ui/
+
+### Naming
+- **Python:** snake_case for functions/variables, PascalCase for classes
+- **TypeScript:** camelCase for functions/variables, PascalCase for components/types
+- **API routes:** /api/v1/{resource} (plural nouns)
+- **Database tables:** snake_case, plural (cases, recommendations, audit_entries)
+- **Files:** snake_case.py for Python, PascalCase.tsx for React components
+
+### Domain Terminology
+Use these terms consistently across the codebase:
+- `case` — a pension advisory case (not "ticket" or "request")
+- `recommendation` — the output of the Reasoner (not "suggestion" or "response")
+- `evidence` — supporting sources for a recommendation (not "references")
+- `audit_entry` — compliance trail record (not "log")
+- `knowledge_item` — a piece of institutional knowledge in Memory
+- `workflow` — a Flow orchestration sequence
+- `suitability_assessment` — compliance check on a recommendation
+
+### LLM Integration
+- All prompts live in backend/app/prompts/ as Jinja2 templates
+- Never hardcode prompts in service files
+- Always include system prompts with compliance guardrails
+- Log all LLM inputs/outputs for audit trail
+- Use structured output parsing (Pydantic models) for LLM responses
+- Handle LLM errors gracefully with fallback messaging
+
+### Security & Compliance
+- Never log PII in plaintext
+- All client data encrypted at rest
+- Audit trail for every case modification
+- Role-based access control via WorkOS
+- All API endpoints require authentication (except health check)
+- GDPR-compliant data handling patterns
+
+### Git
+- Conventional commits: feat:, fix:, docs:, refactor:, test:, chore:
+- Branch naming: feature/, fix/, docs/ prefix
+- PR descriptions must reference the module affected (Workbench, Reasoner, Control, Memory, Flow)
+
+### Testing
+- pytest for backend, Vitest for frontend
+- Test services, not route handlers
+- Mock LLM calls in tests (don't call real API)
+- Integration tests for database operations

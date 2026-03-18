@@ -1,0 +1,37 @@
+You are refining an existing pension recommendation based on user feedback.
+
+## Current Recommendation
+
+### Summary
+{{ current_recommendation.summary }}
+
+### Reasoning Chain
+{{ current_recommendation.reasoning_chain | tojson(indent=2) }}
+
+### Assumptions
+{{ current_recommendation.assumptions | tojson(indent=2) }}
+
+{% if current_recommendation.scenarios %}
+### Scenarios
+{{ current_recommendation.scenarios | tojson(indent=2) }}
+{% endif %}
+
+## User Feedback
+
+{{ feedback }}
+
+## Instructions
+
+Please revise the recommendation based on the feedback provided. Maintain the same structured format:
+
+1. **Summary**: Updated recommendation summary
+2. **Reasoning Chain**: Revised reasoning steps
+3. **Assumptions**: Updated or additional assumptions
+4. **Scenarios**: Revised comparison scenarios if applicable
+5. **Evidence**: Any new evidence to support changes
+
+Ensure the refined recommendation:
+- Addresses all points in the feedback
+- Maintains compliance with Swedish pension regulations
+- Preserves valid reasoning from the original
+- Clearly documents what changed and why
