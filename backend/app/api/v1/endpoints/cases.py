@@ -15,6 +15,7 @@ from app.models.base import (
     CaseType,
     RecommendationType,
 )
+from app.models.recommendation import Recommendation
 from app.schemas.case import CaseCreate, CaseUpdate, CaseResponse
 from app.schemas.audit_entry import AuditEntryResponse
 from app.schemas.recommendation import GenerateRecommendationRequest, RecommendationResponse
@@ -130,6 +131,28 @@ async def get_case_audit_trail(
         select(AuditEntry)
         .where(AuditEntry.case_id == case_id)
         .order_by(AuditEntry.timestamp.desc())
+    )
+    return list(result.scalars().all())
+
+
+@router.get("/{case_id}/recommendations", response_model=list[RecommendationResponse])
+async def list_case_recommendations(
+    case_id: UUID,
+    db: DbSession,
+    current_user: CurrentUser,
+    organization_id: OrganizationId,
+) -> list[Recommendation]:
+    # Verify case belongs to org
+    case_result = await db.execute(
+        select(Case).where(Case.id == case_id, Case.organization_id == organization_id)
+    )
+    if not case_result.scalar_one_or_none():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Case not found")
+
+    result = await db.execute(
+        select(Recommendation)
+        .where(Recommendation.case_id == case_id)
+        .order_by(Recommendation.version.desc())
     )
     return list(result.scalars().all())
 

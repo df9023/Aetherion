@@ -1,7 +1,7 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import JWTError, jwt
 from sqlalchemy import select
@@ -11,19 +11,33 @@ from app.config import get_settings, Settings
 from app.database import get_db
 from app.models.user import User
 
-security = HTTPBearer()
+security = HTTPBearer(auto_error=False)
 
 
 async def get_current_user(
-    credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)],
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(security)],
     db: Annotated[AsyncSession, Depends(get_db)],
     settings: Annotated[Settings, Depends(get_settings)],
+    request: Request,
 ) -> User:
+    # Dev bypass: if DEBUG=true and dev headers present, use those
+    if settings.debug:
+        dev_user_id = request.headers.get("X-Dev-User-Id")
+        if dev_user_id:
+            result = await db.execute(select(User).where(User.id == UUID(dev_user_id)))
+            user = result.scalar_one_or_none()
+            if user and user.is_active:
+                return user
+
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
+
+    if not credentials:
+        raise credentials_exception
+
     try:
         payload = jwt.decode(
             credentials.credentials,

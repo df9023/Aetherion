@@ -5,9 +5,11 @@ from sqlalchemy import select, func
 
 from app.api.deps import CurrentUser, DbSession, OrganizationId
 from app.models.case import Case
+from app.models.evidence import Evidence
 from app.models.recommendation import Recommendation
 from app.models.audit_entry import AuditEntry
 from app.models.base import AuditAction, ActorType, RecommendationStatus, UserRole
+from app.schemas.evidence import EvidenceResponse
 from app.schemas.recommendation import (
     RecommendationCreate,
     RecommendationUpdate,
@@ -15,6 +17,35 @@ from app.schemas.recommendation import (
 )
 
 router = APIRouter()
+
+
+@router.get("/{recommendation_id}/evidence", response_model=list[EvidenceResponse])
+async def list_recommendation_evidence(
+    recommendation_id: UUID,
+    db: DbSession,
+    current_user: CurrentUser,
+    organization_id: OrganizationId,
+) -> list[Evidence]:
+    # Verify recommendation belongs to org via case
+    result = await db.execute(
+        select(Recommendation)
+        .join(Case, Case.id == Recommendation.case_id)
+        .where(
+            Recommendation.id == recommendation_id,
+            Case.organization_id == organization_id,
+        )
+    )
+    if not result.scalar_one_or_none():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Recommendation not found"
+        )
+
+    evidence_result = await db.execute(
+        select(Evidence)
+        .where(Evidence.recommendation_id == recommendation_id)
+        .order_by(Evidence.created_at)
+    )
+    return list(evidence_result.scalars().all())
 
 
 @router.post("", response_model=RecommendationResponse, status_code=status.HTTP_201_CREATED)

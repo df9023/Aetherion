@@ -178,7 +178,7 @@ async def main():
                     "step": 5,
                     "description": "Intressekonfliktdisklosur (IDD-krav)",
                     "evidence_ids": [],
-                    "conclusion": "Ingen intressekonflikt identifierad. NordPension har inga provisionsavtal med de rekommenderade fondleverantörerna."
+                    "conclusion": "Ingen intressekonflikt identifierad. SPP har inga provisionsavtal med de rekommenderade fondleverantörerna."
                 },
             ],
             "assumptions": [
