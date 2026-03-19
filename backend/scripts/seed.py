@@ -16,6 +16,7 @@ Usage:
 
 import asyncio
 import hashlib
+import logging
 import sys
 import uuid
 from datetime import date, datetime, timezone
@@ -30,6 +31,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import get_settings
 from app.database import async_session_maker, engine
+
+logger = logging.getLogger(__name__)
 from app.models.organization import Organization
 from app.models.user import User
 from app.models.client import Client
@@ -232,6 +235,39 @@ KNOWLEDGE_ITEMS = [
 
 
 # ---------------------------------------------------------------------------
+# Embedding helper — real or fake depending on env
+# ---------------------------------------------------------------------------
+async def _get_embed_fn():
+    """Return an async embedding function.
+
+    Uses OpenAI text-embedding-3-small when OPENAI_API_KEY is set,
+    otherwise falls back to the deterministic fake_embedding().
+    """
+    settings = get_settings()
+    if settings.openai_api_key:
+        from openai import AsyncOpenAI
+
+        client = AsyncOpenAI(api_key=settings.openai_api_key)
+        print("  Using OpenAI text-embedding-3-small for real embeddings")
+
+        async def _real(text: str) -> list[float]:
+            response = await client.embeddings.create(
+                model="text-embedding-3-small",
+                input=text,
+            )
+            return response.data[0].embedding
+
+        return _real
+
+    print("  OPENAI_API_KEY not set — using hash-based fake embeddings")
+
+    async def _fake(text: str) -> list[float]:
+        return fake_embedding(text)
+
+    return _fake
+
+
+# ---------------------------------------------------------------------------
 # Seed function
 # ---------------------------------------------------------------------------
 async def seed() -> None:
@@ -367,8 +403,9 @@ async def seed() -> None:
             db.add(audit)
 
         print("Seeding knowledge items with embeddings...")
+        embed = await _get_embed_fn()
         for ki_data in KNOWLEDGE_ITEMS:
-            embedding = fake_embedding(ki_data["content"])
+            embedding = await embed(ki_data["content"])
             ki = KnowledgeItem(
                 id=ki_data["id"],
                 organization_id=ORG_ID,

@@ -36,6 +36,11 @@ class RecommendationBase(BaseModel):
     suitability_score: Optional[Decimal] = None
 
 
+class GenerateRecommendationRequest(BaseModel):
+    recommendation_type: Optional[RecommendationType] = None
+    additional_context: Optional[str] = None
+
+
 class RecommendationCreate(RecommendationBase):
     case_id: UUID
 

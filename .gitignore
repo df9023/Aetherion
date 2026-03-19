@@ -58,3 +58,6 @@ logs/
 *.key
 credentials.json
 service-account*.json
+
+# Generated documents
+generated_documents/

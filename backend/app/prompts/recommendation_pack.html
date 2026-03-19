@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<title>Rekommendationsunderlag — {{ client.name }}</title>
+<style>
+  @page {
+    size: A4;
+    margin: 25mm 20mm 30mm 20mm;
+    @bottom-center {
+      content: "Ärende {{ case.id | truncate(8, True, '') }} · Version {{ recommendation.version }} · {{ generated_at }} · Genererat av Aetherion";
+      font-size: 8pt;
+      color: #666;
+      font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    }
+    @bottom-right {
+      content: "Sida " counter(page) " av " counter(pages);
+      font-size: 8pt;
+      color: #666;
+      font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    }
+  }
+
+  body {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 10.5pt;
+    line-height: 1.5;
+    color: #222;
+    max-width: 170mm;
+    margin: 0 auto;
+  }
+
+  h1 {
+    font-size: 20pt;
+    font-weight: 700;
+    color: #1a1a1a;
+    border-bottom: 2px solid #2c5282;
+    padding-bottom: 8px;
+    margin-top: 0;
+    margin-bottom: 6px;
+  }
+
+  h2 {
+    font-size: 13pt;
+    font-weight: 700;
+    color: #2c5282;
+    margin-top: 22px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 4px;
+  }
+
+  h3 {
+    font-size: 11pt;
+    font-weight: 600;
+    color: #2d3748;
+    margin-top: 14px;
+    margin-bottom: 6px;
+  }
+
+  p { margin: 0 0 8px 0; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0 14px 0;
+    font-size: 10pt;
+  }
+
+  th, td {
+    padding: 6px 10px;
+    text-align: left;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  th {
+    background: #f7fafc;
+    font-weight: 600;
+    color: #2d3748;
+    white-space: nowrap;
+  }
+
+  td { color: #4a5568; }
+
+  .header-meta {
+    color: #718096;
+    font-size: 9.5pt;
+    margin-bottom: 20px;
+  }
+
+  .section-number {
+    display: inline-block;
+    width: 22px;
+    height: 22px;
+    line-height: 22px;
+    text-align: center;
+    background: #2c5282;
+    color: #fff;
+    border-radius: 50%;
+    font-size: 9pt;
+    font-weight: 700;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+
+  .step-box {
+    background: #f7fafc;
+    border-left: 3px solid #2c5282;
+    padding: 10px 14px;
+    margin: 8px 0;
+    page-break-inside: avoid;
+  }
+
+  .step-box .step-num {
+    font-weight: 700;
+    color: #2c5282;
+  }
+
+  .step-box .conclusion {
+    font-style: italic;
+    color: #2d3748;
+  }
+
+  .assumption-box {
+    background: #fffbeb;
+    border-left: 3px solid #d69e2e;
+    padding: 10px 14px;
+    margin: 8px 0;
+    page-break-inside: avoid;
+  }
+
+  .score-badge {
+    display: inline-block;
+    padding: 4px 14px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 11pt;
+  }
+
+  .score-high { background: #c6f6d5; color: #276749; }
+  .score-medium { background: #fefcbf; color: #975a16; }
+  .score-low { background: #fed7d7; color: #9b2c2c; }
+
+  .evidence-list {
+    list-style: none;
+    padding: 0;
+  }
+
+  .evidence-list li {
+    background: #f7fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    padding: 8px 12px;
+    margin: 6px 0;
+    page-break-inside: avoid;
+  }
+
+  .evidence-type {
+    font-size: 8.5pt;
+    text-transform: uppercase;
+    color: #718096;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+
+  .disclosure-box {
+    background: #ebf8ff;
+    border: 1px solid #bee3f8;
+    border-radius: 4px;
+    padding: 12px 16px;
+    margin: 10px 0;
+  }
+
+  .conflict-box {
+    background: #fff5f5;
+    border: 1px solid #fed7d7;
+    border-radius: 4px;
+    padding: 12px 16px;
+    margin: 10px 0;
+  }
+</style>
+</head>
+<body>
+
+<h1>Rekommendationsunderlag</h1>
+<div class="header-meta">
+  {{ client.name }} · {{ case.title }} · {{ generated_at }}
+</div>
+
+<!-- 1. Kundsammanfattning -->
+<h2><span class="section-number">1</span> Kundsammanfattning</h2>
+<table>
+  <tr><th>Namn</th><td>{{ client.name }}</td></tr>
+  <tr><th>Födelsedatum</th><td>{{ client.date_of_birth }}</td></tr>
+  <tr><th>Anställningsstatus</th><td>{{ client.employment_status }}</td></tr>
+  {% if client.employer_name %}
+  <tr><th>Arbetsgivare</th><td>{{ client.employer_name }}</td></tr>
+  {% endif %}
+  <tr><th>Kollektivavtal</th><td>{{ client.collective_agreement }}</td></tr>
+  {% if client.annual_income %}
+  <tr><th>Årsinkomst</th><td>{{ "{:,.0f}".format(client.annual_income | float) }} SEK</td></tr>
+  {% endif %}
+  {% if client.desired_retirement_age %}
+  <tr><th>Önskad pensionsålder</th><td>{{ client.desired_retirement_age }} år</td></tr>
+  {% endif %}
+  {% if client.risk_profile %}
+  <tr><th>Riskprofil</th><td>{{ client.risk_profile }}</td></tr>
+  {% endif %}
+</table>
+
+<!-- 2. Behovsanalys -->
+<h2><span class="section-number">2</span> Behovsanalys</h2>
+<p>{{ recommendation.summary }}</p>
+{% set needs_steps = recommendation.reasoning_chain[:2] if recommendation.reasoning_chain | length > 2 else recommendation.reasoning_chain %}
+{% for step in needs_steps %}
+<div class="step-box">
+  <div><span class="step-num">Steg {{ step.step }}:</span> {{ step.description }}</div>
+  <div class="conclusion">{{ step.conclusion }}</div>
+</div>
+{% endfor %}
+
+<!-- 3. Marknads- och produktanalys -->
+<h2><span class="section-number">3</span> Marknads- och produktanalys</h2>
+{% if recommendation.scenarios %}
+<table>
+  <thead>
+    <tr>
+      <th>Alternativ</th>
+      <th>Beskrivning</th>
+      {% set all_keys = [] %}
+      {% for scenario in recommendation.scenarios %}
+        {% for key in scenario.projected_outcome.keys() %}
+          {% if key not in all_keys %}
+            {% if all_keys.append(key) %}{% endif %}
+          {% endif %}
+        {% endfor %}
+      {% endfor %}
+      {% for key in all_keys %}
+      <th>{{ key | replace('_', ' ') | capitalize }}</th>
+      {% endfor %}
+    </tr>
+  </thead>
+  <tbody>
+    {% for scenario in recommendation.scenarios %}
+    <tr>
+      <td><strong>{{ scenario.name }}</strong></td>
+      <td>{{ scenario.description }}</td>
+      {% for key in all_keys %}
+      <td>{{ scenario.projected_outcome.get(key, '—') }}</td>
+      {% endfor %}
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p>Ingen scenariojämförelse tillgänglig.</p>
+{% endif %}
+
+<!-- 4. Rekommendation -->
+<h2><span class="section-number">4</span> Rekommendation</h2>
+<p>{{ recommendation.summary }}</p>
+<table>
+  <tr><th>Typ</th><td>{{ recommendation.recommendation_type }}</td></tr>
+  <tr><th>Version</th><td>{{ recommendation.version }}</td></tr>
+  <tr><th>Status</th><td>{{ recommendation.status }}</td></tr>
+</table>
+
+<!-- 5. Motivering -->
+<h2><span class="section-number">5</span> Motivering</h2>
+
+<h3>Resonemangskedja</h3>
+{% for step in recommendation.reasoning_chain %}
+{% set is_disclosure = 'Kostnadsinformation' in step.description or 'Intressekonflikt' in step.description %}
+{% if not is_disclosure %}
+<div class="step-box">
+  <div><span class="step-num">Steg {{ step.step }}:</span> {{ step.description }}</div>
+  <div class="conclusion">{{ step.conclusion }}</div>
+  {% if step.evidence_ids %}
+  <div style="font-size: 9pt; color: #718096; margin-top: 4px;">
+    Bevisreferenser: {{ step.evidence_ids | join(', ') }}
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+{% endfor %}
+
+{% if recommendation.assumptions %}
+<h3>Antaganden</h3>
+{% for assumption in recommendation.assumptions %}
+<div class="assumption-box">
+  <div><strong>{{ assumption.assumption }}</strong></div>
+  <div><em>Grund:</em> {{ assumption.basis }}</div>
+  <div><em>Konsekvens om fel:</em> {{ assumption.impact_if_wrong }}</div>
+</div>
+{% endfor %}
+{% endif %}
+
+{% if evidences %}
+<h3>Bevisunderlag</h3>
+<ul class="evidence-list">
+  {% for ev in evidences %}
+  <li>
+    <div class="evidence-type">{{ ev.source_type }} · Konfidens {{ "%.0f" | format(ev.confidence * 100) }}%</div>
+    <div><strong>{{ ev.source_reference }}</strong></div>
+    <div>{{ ev.content_snippet }}</div>
+    <div style="font-size: 9pt; color: #718096;">{{ ev.relevance_explanation }}</div>
+  </li>
+  {% endfor %}
+</ul>
+{% endif %}
+
+<!-- 6. Lämplighetsbedömning -->
+<h2><span class="section-number">6</span> Lämplighetsbedömning</h2>
+{% if recommendation.suitability_score is not none %}
+{% set score = recommendation.suitability_score | float %}
+{% if score >= 0.75 %}
+  {% set score_class = 'score-high' %}
+{% elif score >= 0.5 %}
+  {% set score_class = 'score-medium' %}
+{% else %}
+  {% set score_class = 'score-low' %}
+{% endif %}
+<p>
+  Lämplighetspoäng:
+  <span class="score-badge {{ score_class }}">{{ "%.0f" | format(score * 100) }}%</span>
+</p>
+{% endif %}
+<p>
+  Denna rekommendation har bedömts mot klientens riskprofil
+  {% if client.risk_profile %}({{ client.risk_profile }}){% endif %},
+  ekonomiska situation
+  {% if client.annual_income %}(årsinkomst {{ "{:,.0f}".format(client.annual_income | float) }} SEK){% endif %},
+  och uttalade mål
+  {% if client.desired_retirement_age %}(önskad pensionsålder {{ client.desired_retirement_age }} år){% endif %}.
+</p>
+{% if recommendation.assumptions %}
+<p>Bedömningen grundar sig på {{ recommendation.assumptions | length }} dokumenterade antaganden. Se avsnitt 5 för detaljer om dessa antaganden och deras konsekvenser vid avvikelse.</p>
+{% endif %}
+
+<!-- 7. Kostnadsinformation -->
+<h2><span class="section-number">7</span> Kostnadsinformation</h2>
+{% set cost_step = namespace(found=false, text='') %}
+{% for step in recommendation.reasoning_chain %}
+  {% if 'Kostnadsinformation' in step.description %}
+    {% set cost_step.found = true %}
+    {% set cost_step.text = step.conclusion %}
+  {% endif %}
+{% endfor %}
+{% if cost_step.found %}
+<div class="disclosure-box">
+  {{ cost_step.text }}
+</div>
+{% endif %}
+
+{% if recommendation.scenarios %}
+<h3>Kostnadsjämförelse mellan alternativ</h3>
+<table>
+  <thead>
+    <tr>
+      <th>Alternativ</th>
+      {% if recommendation.scenarios[0].projected_outcome.get('annual_fee') is not none %}
+      <th>Årlig avgift (%)</th>
+      {% endif %}
+      {% if recommendation.scenarios[0].projected_outcome.get('total_cost') is not none %}
+      <th>Total kostnad (SEK)</th>
+      {% endif %}
+    </tr>
+  </thead>
+  <tbody>
+    {% for scenario in recommendation.scenarios %}
+    <tr>
+      <td>{{ scenario.name }}</td>
+      {% if scenario.projected_outcome.get('annual_fee') is not none %}
+      <td>{{ scenario.projected_outcome.annual_fee }}%</td>
+      {% endif %}
+      {% if scenario.projected_outcome.get('total_cost') is not none %}
+      <td>{{ "{:,.0f}".format(scenario.projected_outcome.total_cost | float) }} SEK</td>
+      {% endif %}
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
+<!-- 8. Intressekonflikter -->
+<h2><span class="section-number">8</span> Intressekonflikter</h2>
+{% set conflict_step = namespace(found=false, text='') %}
+{% for step in recommendation.reasoning_chain %}
+  {% if 'Intressekonflikt' in step.description %}
+    {% set conflict_step.found = true %}
+    {% set conflict_step.text = step.conclusion %}
+  {% endif %}
+{% endfor %}
+{% if conflict_step.found %}
+<div class="conflict-box">
+  {{ conflict_step.text }}
+</div>
+{% else %}
+<div class="conflict-box">
+  Inga intressekonflikter har identifierats i samband med denna rekommendation.
+</div>
+{% endif %}
+
+<!-- 9. Rådgivarinformation -->
+<h2><span class="section-number">9</span> Rådgivarinformation</h2>
+<table>
+  <tr><th>Rådgivare</th><td>{{ advisor.name }}</td></tr>
+  <tr><th>E-post</th><td>{{ advisor.email }}</td></tr>
+  <tr><th>Rådgivningsdatum</th><td>{{ generated_at }}</td></tr>
+  <tr><th>Ärendenummer</th><td>{{ case.id }}</td></tr>
+  <tr><th>Rekommendationsversion</th><td>{{ recommendation.version }}</td></tr>
+</table>
+
+</body>
+</html>

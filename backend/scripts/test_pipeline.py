@@ -241,8 +241,61 @@ async def main():
             r3 = await client.get(f"{BASE}/recommendations/{rec['id']}", headers=headers)
             print(f"    Status: {r3.status_code}")
             assert r3.status_code == 200
+
+            # 11b. Generate a DOCX document from the recommendation
+            print(f"\n11b. Generate document for recommendation {rec['id']}")
+            r4 = await client.post(
+                f"{BASE}/recommendations/{rec['id']}/generate-document",
+                headers=headers,
+                json={"file_format": "docx"},
+            )
+            print(f"    Status: {r4.status_code}")
+            if r4.status_code == 201:
+                doc = r4.json()
+                print(f"    Document ID: {doc['id']}")
+                print(f"    File path: {doc['file_path']}")
+                print(f"    Format: {doc['file_format']}")
+                print(f"    Version: {doc['version']}")
+                assert doc["document_type"] == "recommendation_pack"
+                assert doc["file_format"] == "docx"
+
+                # 11c. Download the document
+                print(f"\n11c. Download document {doc['id']}")
+                r5 = await client.get(
+                    f"{BASE}/documents/{doc['id']}/download",
+                    headers=headers,
+                )
+                print(f"    Status: {r5.status_code}")
+                print(f"    Content-Type: {r5.headers.get('content-type', 'unknown')}")
+                print(f"    Size: {len(r5.content)} bytes")
+                assert r5.status_code == 200
+                assert len(r5.content) > 0
+            else:
+                print(f"    Error: {r4.text}")
         else:
             print(f"   Error: {r.text}")
+
+        # 12. Test generate-recommendation endpoint
+        print(f"\n12. Generate AI recommendation for case {CASE_1_ID}")
+        r = await client.post(
+            f"{BASE}/cases/{CASE_1_ID}/generate-recommendation",
+            headers=headers,
+            json={},
+        )
+        print(f"    Status: {r.status_code}")
+        if r.status_code == 201:
+            rec = r.json()
+            print(f"    AI Recommendation ID: {rec['id']}")
+            print(f"    Version: {rec['version']}")
+            print(f"    Type: {rec['recommendation_type']}")
+            print(f"    Suitability: {rec['suitability_score']}")
+            print(f"    Reasoning steps: {len(rec['reasoning_chain'])}")
+            print(f"    Summary: {rec['summary'][:120]}...")
+        elif r.status_code == 503:
+            print("    ANTHROPIC_API_KEY not set — skipped (expected in dev without key)")
+        else:
+            print(f"    Error: {r.text}")
+            assert False, f"Unexpected status {r.status_code}"
 
         print("\n" + "=" * 60)
         print("All pipeline tests passed!")
