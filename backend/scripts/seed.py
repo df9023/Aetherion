@@ -60,9 +60,9 @@ def _uuid(name: str) -> uuid.UUID:
     return uuid.uuid5(uuid.NAMESPACE_DNS, f"aetherion.seed.{name}")
 
 
-ORG_ID = _uuid("org.nordenra")
-USER_ADMIN_ID = _uuid("user.admin.eriksson")
-USER_ADVISOR_ID = _uuid("user.advisor.lindqvist")
+ORG_ID = _uuid("org.spp")
+USER_ADMIN_ID = _uuid("user.admin.eriksson.spp")
+USER_ADVISOR_ID = _uuid("user.advisor.lindqvist.spp")
 CLIENT_1_ID = _uuid("client.anna.johansson")
 CLIENT_2_ID = _uuid("client.lars.pettersson")
 CASE_1_ID = _uuid("case.anna.retirement")
@@ -153,7 +153,7 @@ KNOWLEDGE_ITEMS = [
         "id": KI_IDS[2],
         "title": "Löneväxling — regler och förutsättningar",
         "category": KnowledgeCategory.INTERNAL_POLICY,
-        "source": "NordPension Rådgivning — Intern policy 2024-01",
+        "source": "SPP — Intern policy 2024-01",
         "tags": ["löneväxling", "salary_exchange", "tjänstepension", "skatt"],
         "content": (
             "Löneväxling innebär att den anställde avstår en del av bruttolönen mot "
@@ -195,7 +195,7 @@ KNOWLEDGE_ITEMS = [
         "id": KI_IDS[4],
         "title": "Riskprofiler — bedömning och rekommendation",
         "category": KnowledgeCategory.PLAYBOOK,
-        "source": "NordPension Rådgivning — Riskprofilsguide v3",
+        "source": "SPP — Riskprofilsguide v3",
         "tags": ["riskprofil", "fondalloallokering", "rådgivning", "lämplighetsbedömning"],
         "content": (
             "Riskprofilen avgör rekommenderad tillgångsfördelning. Bedömning ska "
@@ -279,23 +279,25 @@ async def seed() -> None:
         )
         if existing.scalar_one_or_none():
             print("Database already seeded. Truncating and re-seeding...")
-            await db.execute(text("DELETE FROM audit_entries"))
-            await db.execute(text("DELETE FROM evidences"))
-            await db.execute(text("DELETE FROM workflows"))
-            await db.execute(text("DELETE FROM documents"))
-            await db.execute(text("DELETE FROM recommendations"))
-            await db.execute(text("DELETE FROM cases"))
-            await db.execute(text("DELETE FROM clients"))
-            await db.execute(text("DELETE FROM knowledge_items"))
-            await db.execute(text("DELETE FROM users"))
-            await db.execute(text("DELETE FROM organizations"))
-            await db.commit()
+
+        print("Cleaning all seed data...")
+        await db.execute(text("DELETE FROM audit_entries"))
+        await db.execute(text("DELETE FROM evidences"))
+        await db.execute(text("DELETE FROM workflows"))
+        await db.execute(text("DELETE FROM documents"))
+        await db.execute(text("DELETE FROM recommendations"))
+        await db.execute(text("DELETE FROM cases"))
+        await db.execute(text("DELETE FROM clients"))
+        await db.execute(text("DELETE FROM knowledge_items"))
+        await db.execute(text("DELETE FROM users"))
+        await db.execute(text("DELETE FROM organizations"))
+        await db.commit()
 
         print("Seeding organization...")
         org = Organization(
             id=ORG_ID,
-            name="NordPension Rådgivning AB",
-            org_type=OrganizationType.ADVISORY_FIRM,
+            name="SPP",
+            org_type=OrganizationType.PENSION_PROVIDER,
             jurisdiction="SE",
             settings={
                 "default_language": "sv",
@@ -310,7 +312,7 @@ async def seed() -> None:
         admin = User(
             id=USER_ADMIN_ID,
             organization_id=ORG_ID,
-            email="erik.eriksson@nordpension.se",
+            email="erik.eriksson@spp.se",
             name="Erik Eriksson",
             role=UserRole.ADMIN,
             workos_user_id="workos_dev_admin_001",
@@ -318,7 +320,7 @@ async def seed() -> None:
         advisor = User(
             id=USER_ADVISOR_ID,
             organization_id=ORG_ID,
-            email="maria.lindqvist@nordpension.se",
+            email="maria.lindqvist@spp.se",
             name="Maria Lindqvist",
             role=UserRole.ADVISOR,
             workos_user_id="workos_dev_advisor_001",
@@ -427,9 +429,9 @@ async def seed() -> None:
         print("=" * 60)
         print("Seed complete!")
         print("=" * 60)
-        print(f"Organization:  {ORG_ID}  NordPension Rådgivning AB")
-        print(f"Admin user:    {USER_ADMIN_ID}  erik.eriksson@nordpension.se")
-        print(f"Advisor user:  {USER_ADVISOR_ID}  maria.lindqvist@nordpension.se")
+        print(f"Organization:  {ORG_ID}  SPP")
+        print(f"Admin user:    {USER_ADMIN_ID}  erik.eriksson@spp.se")
+        print(f"Advisor user:  {USER_ADVISOR_ID}  maria.lindqvist@spp.se")
         print(f"Client 1:      {CLIENT_1_ID}  Anna Johansson (ITP1, 45 yr)")
         print(f"Client 2:      {CLIENT_2_ID}  Lars Pettersson (ITP2, 58 yr)")
         print(f"Case 1:        {CASE_1_ID}  Retirement planning")
