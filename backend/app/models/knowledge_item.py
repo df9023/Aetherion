@@ -2,13 +2,13 @@ import uuid
 from datetime import datetime, date, timezone
 from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import String, Text, Boolean, Date, DateTime, Enum, ForeignKey
+from sqlalchemy import String, Text, Boolean, Date, DateTime, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID, ARRAY
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from pgvector.sqlalchemy import Vector
 
 from app.database import Base
-from app.models.base import KnowledgeCategory
+from app.models.base import KnowledgeCategory, ValueEnum
 
 if TYPE_CHECKING:
     from app.models.organization import Organization
@@ -27,7 +27,7 @@ class KnowledgeItem(Base):
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
     category: Mapped[KnowledgeCategory] = mapped_column(
-        Enum(KnowledgeCategory), nullable=False
+        ValueEnum(KnowledgeCategory), nullable=False
     )
     source: Mapped[str] = mapped_column(String(512), nullable=False)
     tags: Mapped[list[str]] = mapped_column(ARRAY(String), nullable=False, default=list)

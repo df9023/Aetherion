@@ -1,37 +1,53 @@
-You are refining an existing pension recommendation based on user feedback.
+En befintlig pensionsrekommendation behöver revideras baserat på rådgivarens feedback.
 
-## Current Recommendation
+## Nuvarande rekommendation (version {{ current_recommendation.version }})
 
-### Summary
+### Sammanfattning
 {{ current_recommendation.summary }}
 
-### Reasoning Chain
+### Resonemangskedja
 {{ current_recommendation.reasoning_chain | tojson(indent=2) }}
 
-### Assumptions
+### Antaganden
 {{ current_recommendation.assumptions | tojson(indent=2) }}
 
 {% if current_recommendation.scenarios %}
-### Scenarios
+### Scenariojämförelse
 {{ current_recommendation.scenarios | tojson(indent=2) }}
 {% endif %}
 
-## User Feedback
+{% if current_recommendation.suitability_score %}
+### Lämplighetspoäng
+{{ current_recommendation.suitability_score }}
+{% endif %}
+
+## Tillgängliga kunskapsartiklar
+{% if knowledge_items %}
+{% for item in knowledge_items %}
+### [{{ item.id }}] {{ item.title }}
+**Kategori:** {{ item.category }} | **Källa:** {{ item.source }}
+{{ item.content }}
+---
+{% endfor %}
+{% else %}
+*Inga ytterligare kunskapsartiklar hämtade.*
+{% endif %}
+
+## Rådgivarens feedback
 
 {{ feedback }}
 
-## Instructions
+## Instruktioner
 
-Please revise the recommendation based on the feedback provided. Maintain the same structured format:
+Revidera rekommendationen baserat på feedbacken. Du ska:
 
-1. **Summary**: Updated recommendation summary
-2. **Reasoning Chain**: Revised reasoning steps
-3. **Assumptions**: Updated or additional assumptions
-4. **Scenarios**: Revised comparison scenarios if applicable
-5. **Evidence**: Any new evidence to support changes
+1. Adressera alla punkter i feedbacken
+2. Behålla giltig argumentation från den befintliga rekommendationen
+3. Uppdatera resonemangskedjan med nya eller ändrade steg
+4. Uppdatera eller lägga till antaganden om feedbacken kräver det
+5. Uppdatera scenariojämförelser om feedbacken berör alternativ
+6. Lägga till ny evidens om det behövs för att stödja ändringar
+7. Säkerställa att kostnadsinformation och intressekonfliktdisklosur kvarstår
+8. Justera lämplighetspoängen om ändringarna påverkar lämplighetsbedömningen
 
-Ensure the refined recommendation:
-- Addresses all points in the feedback
-- Maintains compliance with Swedish pension regulations
-- Preserves valid reasoning from the original
-- Clearly documents what changed and why
+Producera den reviderade rekommendationen genom att använda tool_use-verktyget `generate_recommendation`.

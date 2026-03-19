@@ -1,0 +1,57 @@
+Du ska skriva en tydlig och lättförståelig förklaring av en pensionsrekommendation riktad till klienten.
+
+## Klientinformation
+- **Namn:** {{ client.name }}
+- **Ålder:** {{ client.age }} år
+- **Anställning:** {{ client.employment_status }}
+{% if client.employer_name %}- **Arbetsgivare:** {{ client.employer_name }}{% endif %}
+{% if client.collective_agreement != "none" %}- **Kollektivavtal:** {{ client.collective_agreement }}{% endif %}
+{% if client.desired_retirement_age %}- **Önskad pensionsålder:** {{ client.desired_retirement_age }} år{% endif %}
+
+## Rekommendation att förklara
+
+### Sammanfattning
+{{ recommendation.summary }}
+
+### Resonemangskedja
+{% for step in recommendation.reasoning_chain %}
+{% set step_data = step if step is mapping else {} %}
+**Steg {{ step_data.get('step', loop.index) }}:** {{ step_data.get('description', '') }}
+→ Slutsats: {{ step_data.get('conclusion', '') }}
+{% endfor %}
+
+### Antaganden
+{% for assumption in recommendation.assumptions %}
+{% set a = assumption if assumption is mapping else {} %}
+- {{ a.get('assumption', '') }} (baserat på: {{ a.get('basis', '') }})
+{% endfor %}
+
+{% if recommendation.scenarios %}
+### Scenariojämförelse
+{% for scenario in recommendation.scenarios %}
+{% set s = scenario if scenario is mapping else {} %}
+**{{ s.get('name', 'Scenario') }}:** {{ s.get('description', '') }}
+{% endfor %}
+{% endif %}
+
+## Instruktioner
+
+Skriv en klientvänlig förklaring som:
+
+1. **Börjar med det viktigaste** — vad rekommenderas och varför, i 2-3 meningar
+2. **Förklarar bakgrunden** — beskriv klientens pensionssituation i enkla termer, undvik jargong
+3. **Motiverar rekommendationen** — förklara resonemanget steg för steg men på ett vardagligt sätt
+4. **Visar på alternativ** — om det finns scenariojämförelser, förklara skillnaderna i konkreta termer (kronor/månad, procent, påverkan vid pension)
+5. **Redovisar kostnader** — förklara avgifter och kostnader tydligt, gärna med konkreta belopp
+6. **Nämner risker** — vilka risker finns? Vad händer om antagandena inte stämmer?
+7. **Avrundar med nästa steg** — vad behöver klienten göra?
+
+### Tonalitet och språk
+- Skriv på svenska
+- Använd vardagligt men professionellt språk — inga engelska termer, inga förkortningar utan förklaring
+- Förklara begrepp som "premiebestämd", "förmånsbestämd", "löneväxling" om de nämns
+- Skriv som om du förklarar för en kunnig vuxen som inte arbetar med pension
+- Undvik att vara nedlåtande — var respektfull och saklig
+- Var konkret: "ca 1 500 kr/mån i extra pension" snarare än "förbättrad pensionsnivå"
+
+Producera förklaringen genom att använda tool_use-verktyget `generate_client_explanation`.

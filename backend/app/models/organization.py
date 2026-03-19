@@ -2,12 +2,12 @@ import uuid
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
-from sqlalchemy import String, Boolean, DateTime, Enum
+from sqlalchemy import String, Boolean, DateTime
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
-from app.models.base import OrganizationType
+from app.models.base import OrganizationType, ValueEnum
 
 if TYPE_CHECKING:
     from app.models.user import User
@@ -22,7 +22,7 @@ class Organization(Base):
     )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     org_type: Mapped[OrganizationType] = mapped_column(
-        Enum(OrganizationType), nullable=False
+        ValueEnum(OrganizationType), nullable=False
     )
     jurisdiction: Mapped[str] = mapped_column(String(10), nullable=False, default="SE")
     settings: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)

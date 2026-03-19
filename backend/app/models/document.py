@@ -2,12 +2,12 @@ import uuid
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import String, DateTime, Enum, ForeignKey, Integer
+from sqlalchemy import String, DateTime, ForeignKey, Integer
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
-from app.models.base import DocumentType, FileFormat
+from app.models.base import DocumentType, FileFormat, ValueEnum
 
 if TYPE_CHECKING:
     from app.models.case import Case
@@ -27,12 +27,12 @@ class Document(Base):
         UUID(as_uuid=True), ForeignKey("recommendations.id"), nullable=True
     )
     document_type: Mapped[DocumentType] = mapped_column(
-        Enum(DocumentType), nullable=False
+        ValueEnum(DocumentType), nullable=False
     )
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     template_id: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     file_path: Mapped[str] = mapped_column(String(1024), nullable=False)
-    file_format: Mapped[FileFormat] = mapped_column(Enum(FileFormat), nullable=False)
+    file_format: Mapped[FileFormat] = mapped_column(ValueEnum(FileFormat), nullable=False)
     generated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc)
     )

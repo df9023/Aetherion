@@ -3,12 +3,12 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 from decimal import Decimal
 
-from sqlalchemy import String, Text, DateTime, Enum, ForeignKey, Numeric
+from sqlalchemy import String, Text, DateTime, ForeignKey, Numeric
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
-from app.models.base import EvidenceSourceType
+from app.models.base import EvidenceSourceType, ValueEnum
 
 if TYPE_CHECKING:
     from app.models.recommendation import Recommendation
@@ -24,7 +24,7 @@ class Evidence(Base):
         UUID(as_uuid=True), ForeignKey("recommendations.id"), nullable=False
     )
     source_type: Mapped[EvidenceSourceType] = mapped_column(
-        Enum(EvidenceSourceType), nullable=False
+        ValueEnum(EvidenceSourceType), nullable=False
     )
     source_reference: Mapped[str] = mapped_column(String(1024), nullable=False)
     content_snippet: Mapped[str] = mapped_column(Text, nullable=False)

@@ -3,12 +3,12 @@ from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Optional
 from decimal import Decimal
 
-from sqlalchemy import String, Text, DateTime, Enum, ForeignKey, Integer, Numeric
+from sqlalchemy import String, Text, DateTime, ForeignKey, Integer, Numeric
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
-from app.models.base import RecommendationType, RecommendationStatus
+from app.models.base import RecommendationType, RecommendationStatus, ValueEnum
 
 if TYPE_CHECKING:
     from app.models.case import Case
@@ -28,7 +28,7 @@ class Recommendation(Base):
     )
     version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     recommendation_type: Mapped[RecommendationType] = mapped_column(
-        Enum(RecommendationType), nullable=False
+        ValueEnum(RecommendationType), nullable=False
     )
     summary: Mapped[str] = mapped_column(Text, nullable=False)
     reasoning_chain: Mapped[dict] = mapped_column(JSONB, nullable=False, default=list)
@@ -38,7 +38,7 @@ class Recommendation(Base):
         Numeric(5, 4), nullable=True
     )
     status: Mapped[RecommendationStatus] = mapped_column(
-        Enum(RecommendationStatus), nullable=False, default=RecommendationStatus.DRAFT
+        ValueEnum(RecommendationStatus), nullable=False, default=RecommendationStatus.DRAFT
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc)

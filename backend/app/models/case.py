@@ -2,12 +2,12 @@ import uuid
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import String, Text, DateTime, Enum, ForeignKey
+from sqlalchemy import String, Text, DateTime, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
-from app.models.base import CaseType, CaseStatus
+from app.models.base import CaseType, CaseStatus, ValueEnum
 
 if TYPE_CHECKING:
     from app.models.client import Client
@@ -31,9 +31,9 @@ class Case(Base):
     assigned_to: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id"), nullable=False
     )
-    case_type: Mapped[CaseType] = mapped_column(Enum(CaseType), nullable=False)
+    case_type: Mapped[CaseType] = mapped_column(ValueEnum(CaseType), nullable=False)
     status: Mapped[CaseStatus] = mapped_column(
-        Enum(CaseStatus), nullable=False, default=CaseStatus.DRAFT
+        ValueEnum(CaseStatus), nullable=False, default=CaseStatus.DRAFT
     )
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     summary: Mapped[Optional[str]] = mapped_column(Text, nullable=True)

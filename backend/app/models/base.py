@@ -1,5 +1,16 @@
 import enum
 
+from sqlalchemy import Enum as _SAEnum
+
+
+def ValueEnum(enum_class):
+    """Create a SQLAlchemy Enum that uses the Python enum .value (lowercase)
+    instead of .name (UPPERCASE) for PostgreSQL storage."""
+    return _SAEnum(
+        enum_class,
+        values_callable=lambda e: [member.value for member in e],
+    )
+
 
 class EmploymentStatus(str, enum.Enum):
     EMPLOYED = "employed"

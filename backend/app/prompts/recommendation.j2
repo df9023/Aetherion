@@ -1,51 +1,55 @@
-You are a Swedish pension advisory expert helping generate compliant, evidence-based recommendations.
+Generera en strukturerad pensionsrekommendation baserat på klientens situation och hämtad kunskapsbas.
 
-## Context
-Recommendation Type: {{ recommendation_type }}
+## Ärendetyp
+{{ recommendation_type }}
 
-### Client and Case Information
+## Klient- och ärendeinformation
 {{ context | tojson(indent=2) }}
 
-### Relevant Knowledge Items
+## Hämtade kunskapsartiklar
+
+Använd dessa som evidens i din rekommendation. Citera dem med deras ID i reasoning_chain.evidence_ids.
+{% if knowledge_items %}
 {% for item in knowledge_items %}
-#### {{ item.title }} ({{ item.category }})
+### [{{ item.id }}] {{ item.title }}
+**Kategori:** {{ item.category }}
+**Källa:** {{ item.source }}
+{% if item.tags %}**Taggar:** {{ item.tags | join(', ') }}{% endif %}
+{% if item.effective_date %}**Gäller från:** {{ item.effective_date }}{% endif %}
+
 {{ item.content }}
-Source: {{ item.source }}
-{% if item.tags %}Tags: {{ item.tags | join(', ') }}{% endif %}
+
 ---
 {% endfor %}
+{% else %}
+*Inga kunskapsartiklar hämtade. Basera rekommendationen på din expertkunskap och flagga avsaknaden av stödjande evidens.*
+{% endif %}
 
-## Instructions
+## Instruktioner
 
-Generate a structured pension recommendation with the following components:
+Analysera klientens situation steg för steg och producera en komplett rekommendation.
 
-1. **Summary**: A clear, concise summary of the recommendation (2-3 paragraphs)
+### Steg 1 — Behovsanalys
+- Identifiera klientens nuvarande pensionssituation baserat på kollektivavtal och anställning
+- Kartlägg luckor: har klienten tillräcklig pension, dödsfallsskydd, sjukskydd?
+- Beakta klientens riskprofil ({{ context.risk_profile | default('ej angiven') }}) och önskad pensionsålder ({{ context.desired_retirement_age | default('ej angiven') }})
 
-2. **Reasoning Chain**: Step-by-step reasoning that led to this recommendation. Each step should:
-   - Describe what was analyzed
-   - Reference relevant evidence
-   - State the conclusion for that step
+### Steg 2 — Alternativanalys
+- Identifiera relevanta produkter/lösningar som adresserar de identifierade behoven
+- Jämför alternativ avseende avgifter, villkor, flexibilitet
+- Motivera varför vissa alternativ inkluderas eller utesluts
 
-3. **Assumptions**: Document all assumptions made, including:
-   - The assumption itself
-   - The basis for the assumption
-   - Impact if the assumption is wrong
+### Steg 3 — Lämplighetsbedömning
+- Bedöm att rekommendationen passar klientens kunskapsnivå och erfarenhet
+- Bekräfta att den matchar klientens ekonomiska situation
+- Verifiera att den ligger i linje med klientens investeringsmål och risktolerans
 
-4. **Scenarios** (if applicable): Compare different options with projected outcomes
+### Steg 4 — Kostnadsinformation
+- Redovisa samtliga avgifter (förvaltningsavgift, flyttavgift, försäkringspremie etc.)
+- Visa kostnadernas påverkan på förväntad avkastning över tid
 
-5. **Evidence**: For each piece of evidence used, provide:
-   - Source type (product_rule, regulation, internal_policy, market_data, client_data, precedent, expert_knowledge)
-   - Source reference
-   - Relevant excerpt
-   - Why this evidence supports the recommendation
-   - Confidence level (0.0-1.0)
+### Steg 5 — Intressekonflikter
+- Identifiera och dokumentera eventuella intressekonflikter
+- Om inga finns, dokumentera det som ett antagande
 
-## Important Guidelines
-
-- All recommendations must comply with Swedish pension regulations (IDD, GDPR)
-- Consider the client's collective agreement ({{ context.collective_agreement if context.collective_agreement else 'not specified' }})
-- Assess suitability based on the client's risk profile
-- Document any conflicts of interest
-- Use clear, professional Swedish financial terminology
-
-Please provide your recommendation in a structured format.
+Producera din rekommendation genom att använda tool_use-verktyget `generate_recommendation`.

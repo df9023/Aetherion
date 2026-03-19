@@ -3,12 +3,12 @@ from datetime import datetime, date, timezone
 from typing import TYPE_CHECKING, Optional
 from decimal import Decimal
 
-from sqlalchemy import String, Date, DateTime, Enum, ForeignKey, Integer, Numeric
+from sqlalchemy import String, Date, DateTime, ForeignKey, Integer, Numeric
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
-from app.models.base import EmploymentStatus, CollectiveAgreement, RiskProfile
+from app.models.base import EmploymentStatus, CollectiveAgreement, RiskProfile, ValueEnum
 from app.utils.encryption import EncryptedString
 
 if TYPE_CHECKING:
@@ -30,18 +30,18 @@ class Client(Base):
     name: Mapped[str] = mapped_column(EncryptedString(512), nullable=False)
     date_of_birth: Mapped[date] = mapped_column(Date, nullable=False)
     employment_status: Mapped[EmploymentStatus] = mapped_column(
-        Enum(EmploymentStatus), nullable=False
+        ValueEnum(EmploymentStatus), nullable=False
     )
     employer_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     collective_agreement: Mapped[CollectiveAgreement] = mapped_column(
-        Enum(CollectiveAgreement), nullable=False
+        ValueEnum(CollectiveAgreement), nullable=False
     )
     annual_income: Mapped[Optional[Decimal]] = mapped_column(
         Numeric(15, 2), nullable=True
     )
     desired_retirement_age: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     risk_profile: Mapped[Optional[RiskProfile]] = mapped_column(
-        Enum(RiskProfile), nullable=True
+        ValueEnum(RiskProfile), nullable=True
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc)

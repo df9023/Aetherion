@@ -2,12 +2,12 @@ import uuid
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import String, DateTime, Enum, ForeignKey
+from sqlalchemy import String, DateTime, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
-from app.models.base import WorkflowStatus
+from app.models.base import WorkflowStatus, ValueEnum
 
 if TYPE_CHECKING:
     from app.models.case import Case
@@ -25,7 +25,7 @@ class Workflow(Base):
     workflow_template: Mapped[str] = mapped_column(String(255), nullable=False)
     current_step: Mapped[str] = mapped_column(String(255), nullable=False)
     status: Mapped[WorkflowStatus] = mapped_column(
-        Enum(WorkflowStatus), nullable=False, default=WorkflowStatus.ACTIVE
+        ValueEnum(WorkflowStatus), nullable=False, default=WorkflowStatus.ACTIVE
     )
     steps_completed: Mapped[dict] = mapped_column(JSONB, nullable=False, default=list)
     pending_actions: Mapped[dict] = mapped_column(JSONB, nullable=False, default=list)
