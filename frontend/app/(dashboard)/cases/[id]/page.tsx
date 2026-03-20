@@ -1,6 +1,6 @@
 "use client"
 
-import { use, useState, useEffect, useRef, useCallback } from "react"
+import { use, useState, useEffect, useCallback } from "react"
 import {
   Calendar,
   User,
@@ -17,6 +17,8 @@ import {
   BookOpen,
   Cpu,
   Loader2,
+  ChevronDown,
+  ClipboardList,
 } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
@@ -27,17 +29,26 @@ import { Textarea } from "@/components/ui/textarea"
 import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
   useCase,
   useClient,
   useCaseRecommendations,
   useRecommendationEvidence,
   useCaseAudit,
   useGenerateRecommendation,
+  useGenerateMeetingBrief,
   useGenerateDocument,
   useKnowledgeSearch,
+  useUpdateCase,
   downloadDocument,
 } from "@/lib/hooks"
-import type { DocumentResponse } from "@/lib/hooks"
+import type { DocumentResponse, MeetingBriefResponse } from "@/lib/hooks"
+import { MeetingBriefViewer } from "@/components/meeting-brief-viewer"
 import {
   caseTypeLabels,
   statusStyles,
@@ -47,6 +58,15 @@ import {
   sourceTypeStyles,
   auditActionLabels,
 } from "@/lib/labels"
+
+const STATUS_TRANSITIONS: Record<string, string[]> = {
+  draft: ["in_preparation"],
+  in_preparation: ["ready_for_review"],
+  ready_for_review: ["in_review"],
+  in_review: ["approved"],
+  approved: ["completed"],
+  completed: ["archived"],
+}
 
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString("en-SE", {
@@ -100,8 +120,11 @@ export default function CaseDetailPage({ params }: { params: Promise<{ id: strin
   const { data: evidence } = useRecommendationEvidence(recommendation?.id)
   const { data: auditEntries } = useCaseAudit(id)
   const generateRec = useGenerateRecommendation(id)
+  const generateBrief = useGenerateMeetingBrief(id)
   const generateDoc = useGenerateDocument(recommendation?.id)
+  const updateCase = useUpdateCase(id)
 
+  const [meetingBrief, setMeetingBrief] = useState<MeetingBriefResponse | null>(null)
   const [additionalContext, setAdditionalContext] = useState("")
   const [knowledgeQuery, setKnowledgeQuery] = useState("")
   const debouncedQuery = useDebounced(knowledgeQuery, 300)
@@ -114,6 +137,16 @@ export default function CaseDetailPage({ params }: { params: Promise<{ id: strin
       onError: (err) => toast.error(err.message),
     })
   }, [generateRec, additionalContext])
+
+  const handleGenerateBrief = useCallback(() => {
+    generateBrief.mutate(undefined, {
+      onSuccess: (data) => {
+        setMeetingBrief(data)
+        toast.success("Meeting brief generated")
+      },
+      onError: (err) => toast.error(err.message),
+    })
+  }, [generateBrief])
 
   const handleGenerateDoc = useCallback(
     (format: string) => {
@@ -169,9 +202,37 @@ export default function CaseDetailPage({ params }: { params: Promise<{ id: strin
               <p className="mt-1 text-sm text-slate-500">{caseData.summary}</p>
             </div>
             <div className="flex items-center gap-2">
-              <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${statusStyles[caseData.status] ?? ""}`}>
-                {statusLabels[caseData.status] ?? caseData.status}
-              </span>
+              {STATUS_TRANSITIONS[caseData.status] ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors hover:opacity-80 ${statusStyles[caseData.status] ?? ""}`}>
+                      {statusLabels[caseData.status] ?? caseData.status}
+                      <ChevronDown className="h-3 w-3" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    {STATUS_TRANSITIONS[caseData.status].map((next) => (
+                      <DropdownMenuItem
+                        key={next}
+                        onClick={() =>
+                          updateCase.mutate(
+                            { status: next },
+                            { onSuccess: () => toast.success(`Status changed to ${statusLabels[next] ?? next}`) }
+                          )
+                        }
+                      >
+                        <span className={`mr-2 inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium ${statusStyles[next] ?? ""}`}>
+                          {statusLabels[next] ?? next}
+                        </span>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${statusStyles[caseData.status] ?? ""}`}>
+                  {statusLabels[caseData.status] ?? caseData.status}
+                </span>
+              )}
               <span className="inline-flex rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
                 {caseTypeLabels[caseData.case_type] ?? caseData.case_type}
               </span>
@@ -185,6 +246,69 @@ export default function CaseDetailPage({ params }: { params: Promise<{ id: strin
               </span>
             )}
           </div>
+        </div>
+
+        {/* Meeting Brief */}
+        <div className="rounded-xl border border-slate-200/60 bg-white p-6 shadow-sm">
+          <div className="flex items-center gap-2">
+            <ClipboardList className="h-5 w-5 text-sky-500" />
+            <h2 className="text-lg font-semibold text-slate-900">Meeting Brief</h2>
+          </div>
+
+          {/* State 1: No brief */}
+          {!meetingBrief && !generateBrief.isPending && (
+            <div className="mt-6">
+              <div className="flex flex-col items-center py-6 text-center">
+                <ClipboardList className="h-10 w-10 text-slate-300" />
+                <p className="mt-3 text-sm font-medium text-slate-600">Prepare for your client meeting</p>
+                <p className="mt-1 text-xs text-slate-400">AI will analyze the case and generate a structured meeting preparation document.</p>
+              </div>
+              <Button
+                onClick={handleGenerateBrief}
+                className="mt-2 h-12 w-full bg-sky-500 hover:bg-sky-600 text-white rounded-lg"
+              >
+                <ClipboardList className="mr-2 h-4 w-4" />
+                Prepare Meeting
+              </Button>
+            </div>
+          )}
+
+          {/* State 2: Generating */}
+          {generateBrief.isPending && (
+            <div className="mt-6 space-y-4 py-8">
+              {["Retrieving knowledge", "Analyzing client situation", "Building meeting brief"].map((step, i) => (
+                <div key={step} className="flex items-center gap-3">
+                  <div className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
+                    i === 0 ? "bg-sky-500 text-white" : "bg-slate-200 text-slate-500"
+                  }`}>
+                    {i === 0 ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : i + 1}
+                  </div>
+                  <span className={`text-sm ${i === 0 ? "font-medium text-slate-900" : "text-slate-400"}`}>
+                    {step}...
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* State 3: Brief exists */}
+          {meetingBrief && !generateBrief.isPending && (
+            <>
+              <div className="mt-6">
+                <MeetingBriefViewer brief={meetingBrief} />
+              </div>
+              <Separator className="my-6" />
+              <Button
+                variant="outline"
+                className="rounded-lg"
+                onClick={handleGenerateBrief}
+                disabled={generateBrief.isPending}
+              >
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Regenerate Brief
+              </Button>
+            </>
+          )}
         </div>
 
         {/* Client info */}

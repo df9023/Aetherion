@@ -214,6 +214,224 @@ CLIENT_EXPLANATION_TOOL = {
 }
 
 
+DOCUMENT_EXTRACTION_TOOL = {
+    "name": "extract_document_data",
+    "description": "Extract structured pension-relevant data from an uploaded document (pensionsbesked, lönespecifikation, insurance policy, etc.).",
+    "input_schema": {
+        "type": "object",
+        "required": ["document_type", "extracted_fields", "fund_allocations", "other_observations"],
+        "properties": {
+            "document_type": {
+                "type": "string",
+                "description": "Identified document type (e.g., 'pensionsbesked', 'lönespecifikation', 'försäkringsbrev', 'årsbesked', 'valcentral').",
+            },
+            "extracted_fields": {
+                "type": "array",
+                "description": "All pension-relevant fields extracted from the document.",
+                "items": {
+                    "type": "object",
+                    "required": ["field_name", "value", "confidence"],
+                    "properties": {
+                        "field_name": {
+                            "type": "string",
+                            "enum": [
+                                "name",
+                                "date_of_birth",
+                                "employer_name",
+                                "collective_agreement",
+                                "annual_income",
+                                "monthly_income",
+                                "employment_status",
+                                "pension_provider",
+                                "total_fees_percent",
+                                "survivor_protection",
+                                "pension_capital",
+                                "desired_retirement_age",
+                                "risk_profile",
+                            ],
+                            "description": "The field being extracted.",
+                        },
+                        "value": {
+                            "type": "string",
+                            "description": "The extracted value as a string.",
+                        },
+                        "confidence": {
+                            "type": "number",
+                            "minimum": 0.0,
+                            "maximum": 1.0,
+                            "description": "Confidence in the extraction (0.0-1.0). High (>0.8) = clearly stated in document. Medium (0.5-0.8) = inferred or partially visible. Low (<0.5) = uncertain/guessed.",
+                        },
+                        "source_text": {
+                            "type": "string",
+                            "description": "The exact text from the document this was extracted from.",
+                        },
+                    },
+                },
+            },
+            "fund_allocations": {
+                "type": "array",
+                "description": "Fund allocation details if present in the document.",
+                "items": {
+                    "type": "object",
+                    "required": ["fund_name", "allocation_percent", "confidence"],
+                    "properties": {
+                        "fund_name": {
+                            "type": "string",
+                            "description": "Name of the fund.",
+                        },
+                        "allocation_percent": {
+                            "type": "number",
+                            "description": "Allocation percentage (0-100).",
+                        },
+                        "fee_percent": {
+                            "type": "number",
+                            "description": "Annual fee percentage for this fund, if stated.",
+                        },
+                        "confidence": {
+                            "type": "number",
+                            "minimum": 0.0,
+                            "maximum": 1.0,
+                            "description": "Confidence in this extraction.",
+                        },
+                    },
+                },
+            },
+            "other_observations": {
+                "type": "string",
+                "description": "Free-text observations: anything notable that doesn't fit the structured fields (e.g., special clauses, warnings, pending changes, beneficiary info).",
+            },
+        },
+    },
+}
+
+
+MEETING_BRIEF_TOOL = {
+    "name": "generate_meeting_brief",
+    "description": "Produce a structured meeting preparation brief for an advisor-client pension meeting.",
+    "input_schema": {
+        "type": "object",
+        "required": [
+            "client_overview",
+            "pension_situation",
+            "key_issues",
+            "talking_points",
+            "open_questions",
+            "meeting_agenda",
+        ],
+        "properties": {
+            "client_overview": {
+                "type": "string",
+                "description": "Concise summary of the client's situation: age, employment, income, family, risk profile, and relevant background. 2-3 paragraphs.",
+            },
+            "pension_situation": {
+                "type": "array",
+                "description": "Breakdown of the client's pension across the three pillars of Swedish pension system.",
+                "items": {
+                    "type": "object",
+                    "required": ["pillar", "description", "estimated_value", "notes"],
+                    "properties": {
+                        "pillar": {
+                            "type": "string",
+                            "enum": ["allmän_pension", "tjänstepension", "privat_sparande"],
+                            "description": "Which pillar this entry covers.",
+                        },
+                        "description": {
+                            "type": "string",
+                            "description": "Description of current state within this pillar.",
+                        },
+                        "estimated_value": {
+                            "type": "string",
+                            "description": "Estimated current or projected value (SEK), or 'Okänt' if unknown.",
+                        },
+                        "notes": {
+                            "type": "string",
+                            "description": "Important notes, gaps, or action items for this pillar.",
+                        },
+                    },
+                },
+            },
+            "key_issues": {
+                "type": "array",
+                "description": "Issues or risks that should be discussed during the meeting.",
+                "items": {
+                    "type": "object",
+                    "required": ["title", "description", "severity"],
+                    "properties": {
+                        "title": {
+                            "type": "string",
+                            "description": "Short title for the issue.",
+                        },
+                        "description": {
+                            "type": "string",
+                            "description": "Explanation of the issue and why it matters.",
+                        },
+                        "severity": {
+                            "type": "string",
+                            "enum": ["high", "medium", "low"],
+                            "description": "How urgent or impactful this issue is.",
+                        },
+                    },
+                },
+            },
+            "pre_modeled_scenarios": {
+                "type": "array",
+                "description": "Pre-calculated scenarios the advisor can present during the meeting.",
+                "items": {
+                    "type": "object",
+                    "required": ["name", "description", "projected_outcome"],
+                    "properties": {
+                        "name": {
+                            "type": "string",
+                            "description": "Scenario name (e.g., 'Nuvarande plan', 'Med löneväxling', 'Tidigarelagd pension').",
+                        },
+                        "description": {
+                            "type": "string",
+                            "description": "What this scenario entails.",
+                        },
+                        "projected_outcome": {
+                            "type": "object",
+                            "description": "Key-value pairs of projected metrics (e.g., monthly_pension, total_savings, retirement_age).",
+                        },
+                    },
+                },
+            },
+            "talking_points": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "Ordered list of key talking points for the advisor to cover during the meeting.",
+            },
+            "open_questions": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "Questions the advisor should ask the client to gather missing information or clarify needs.",
+            },
+            "meeting_agenda": {
+                "type": "array",
+                "description": "Suggested meeting agenda with time estimates.",
+                "items": {
+                    "type": "object",
+                    "required": ["topic", "duration_minutes", "description"],
+                    "properties": {
+                        "topic": {
+                            "type": "string",
+                            "description": "Agenda item topic.",
+                        },
+                        "duration_minutes": {
+                            "type": "integer",
+                            "description": "Suggested time in minutes for this agenda item.",
+                        },
+                        "description": {
+                            "type": "string",
+                            "description": "What to cover in this agenda item.",
+                        },
+                    },
+                },
+            },
+        },
+    },
+}
+
+
 class ReasonerService:
     """LLM reasoning engine for generating structured recommendations."""
 
@@ -469,6 +687,69 @@ class ReasonerService:
         )
 
         return self._extract_tool_input(response, "generate_client_explanation")
+
+    async def generate_meeting_brief(
+        self,
+        case_id: UUID,
+        context: dict,
+        knowledge_items: list[dict],
+        additional_context: str | None = None,
+    ) -> dict:
+        """Generate a structured meeting preparation brief. Returns raw dict (no DB model)."""
+        template = self.jinja_env.get_template("meeting_brief.j2")
+        prompt = template.render(
+            context=context,
+            knowledge_items=knowledge_items,
+            additional_context=additional_context,
+        )
+
+        response = await self.client.messages.create(
+            model="claude-sonnet-4-20250514",
+            max_tokens=8192,
+            system=self._render_system_prompt(),
+            tools=[MEETING_BRIEF_TOOL],
+            tool_choice={"type": "tool", "name": "generate_meeting_brief"},
+            messages=[{"role": "user", "content": prompt}],
+        )
+
+        return self._extract_tool_input(response, "generate_meeting_brief")
+
+    async def extract_document_data(
+        self,
+        document_text: str,
+        pdf_bytes: bytes | None = None,
+    ) -> dict:
+        """Extract structured pension data from a document using Claude."""
+        template = self.jinja_env.get_template("document_extraction.j2")
+        prompt_text = template.render(document_text=document_text)
+
+        # Build message content — use vision if raw PDF bytes provided
+        if pdf_bytes:
+            import base64
+            content = [
+                {
+                    "type": "document",
+                    "source": {
+                        "type": "base64",
+                        "media_type": "application/pdf",
+                        "data": base64.standard_b64encode(pdf_bytes).decode(),
+                    },
+                },
+                {"type": "text", "text": prompt_text},
+            ]
+        else:
+            content = prompt_text
+
+        response = await self.client.messages.create(
+            model="claude-sonnet-4-20250514",
+            max_tokens=4096,
+            system=self._render_system_prompt(),
+            tools=[DOCUMENT_EXTRACTION_TOOL],
+            tool_choice={"type": "tool", "name": "extract_document_data"},
+            messages=[{"role": "user", "content": content}],
+        )
+
+        return self._extract_tool_input(response, "extract_document_data")
 
     def _extract_tool_input(self, response, tool_name: str) -> dict:
         """Extract the tool input from a Claude tool_use response."""

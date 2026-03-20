@@ -1,0 +1,55 @@
+Extrahera strukturerad pensionsdata från det uppladdade dokumentet.
+
+## Dokumentinnehåll (extraherad text)
+{{ document_text }}
+
+## Instruktioner
+
+Du har fått ett dokument som laddats upp av en pensionsrådgivare. Dokumentet kan vara ett av följande:
+- **Pensionsbesked** (från Collectum, Alecta, SPP, AMF, Skandia, Folksam, etc.)
+- **Lönespecifikation** (visar bruttolön, pensionsavsättningar, skatt)
+- **Försäkringsbrev** (livförsäkring, sjukförsäkring, efterlevandeskydd)
+- **Årsbesked** (sammanställning av pensionskapital, fondinnehav, avgifter)
+- **Valcentralsinformation** (fondval, omplaceringar)
+
+### Uppgift
+1. **Identifiera dokumenttyp** — Ange vilken typ av dokument det verkar vara.
+
+2. **Extrahera fält** — Extrahera alla pensionsrelevanta fält du kan hitta:
+   - `name` — Klientens fullständiga namn
+   - `date_of_birth` — Födelsedatum (format: YYYY-MM-DD)
+   - `employer_name` — Arbetsgivare
+   - `collective_agreement` — Kollektivavtal (ITP1, ITP2, SAF_LO, KAP_KL, AKAP_KL, PA16, other, none)
+   - `annual_income` — Årsinkomst i kronor (numeriskt)
+   - `monthly_income` — Månadsinkomst i kronor (numeriskt)
+   - `employment_status` — Anställningsstatus (employed, self_employed, retired, other)
+   - `pension_provider` — Pensionsleverantör (t.ex. SPP, Alecta, AMF)
+   - `total_fees_percent` — Totala avgifter i procent
+   - `survivor_protection` — Efterlevandeskydd (ja/nej/detaljer)
+   - `pension_capital` — Pensionskapital/behållning i kronor
+   - `desired_retirement_age` — Önskad pensionsålder
+   - `risk_profile` — Riskprofil om angiven (low, moderate, high)
+
+3. **Fondfördelning** — Om dokumentet visar fondval, extrahera:
+   - Fondnamn, procentuell fördelning, och avgift per fond
+
+4. **Konfidensnivå** — Sätt confidence baserat på:
+   - **>0.8**: Värdet är tydligt angivet i dokumentet
+   - **0.5-0.8**: Värdet är härlett eller delvis synligt (t.ex. månadslön × 12 = årsinkomst)
+   - **<0.5**: Osäkert, gissat, eller baserat på kontext snarare än explicit text
+
+5. **Övriga observationer** — Notera allt annat som kan vara relevant:
+   - Speciella villkor eller klausuler
+   - Väntande ändringar
+   - Förmånstagare
+   - Varningar eller risker
+   - Information som saknas men borde finnas
+
+### Viktigt
+- Extrahera BARA det som faktiskt finns i dokumentet — gissa inte
+- Om ett fält inte finns i dokumentet, inkludera det inte
+- Om inkomst anges per månad, räkna om till årsbelopp OCH inkludera båda
+- Kollektivavtal: matcha mot enumvärdena (ITP1, ITP2, SAF_LO, KAP_KL, AKAP_KL, PA16, other, none)
+- Citera källtexten i `source_text` för varje extraherat fält
+
+Producera din extraktion genom att använda tool_use-verktyget `extract_document_data`.

@@ -100,6 +100,9 @@ class AuditAction(str, enum.Enum):
     WORKFLOW_STEP_COMPLETED = "workflow_step_completed"
     WORKFLOW_PAUSED = "workflow_paused"
     WORKFLOW_RESUMED = "workflow_resumed"
+    MEETING_BRIEF_GENERATED = "meeting_brief_generated"
+    DOCUMENT_INGESTED = "document_ingested"
+    CLIENT_DATA_APPLIED = "client_data_applied"
 
 
 class ActorType(str, enum.Enum):

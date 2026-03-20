@@ -1,5 +1,6 @@
 "use client"
 
+import React from "react"
 import { usePathname } from "next/navigation"
 import {
   Breadcrumb,
@@ -9,45 +10,49 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
-import { mockCases } from "@/lib/mock-data"
+import { useCase, useClient } from "@/lib/hooks"
 
-function useBreadcrumbs() {
+export function TopBar() {
   const pathname = usePathname()
   const segments = pathname.split("/").filter(Boolean)
+
+  const caseId = segments[0] === "cases" && segments[1] ? segments[1] : ""
+  const clientId = segments[0] === "clients" && segments[1] ? segments[1] : ""
+
+  const { data: caseData } = useCase(caseId)
+  const { data: clientData } = useClient(clientId)
 
   const crumbs: { label: string; href?: string }[] = []
 
   if (segments[0] === "cases") {
     crumbs.push({ label: "Cases", href: segments.length > 1 ? "/cases" : undefined })
     if (segments[1]) {
-      const c = mockCases.find((c) => c.id === segments[1])
-      crumbs.push({ label: c?.title ?? segments[1] })
+      crumbs.push({ label: caseData?.title ?? "Loading..." })
     }
   } else if (segments[0] === "clients") {
-    crumbs.push({ label: "Clients" })
+    crumbs.push({ label: "Clients", href: segments.length > 1 ? "/clients" : undefined })
+    if (segments[1]) {
+      crumbs.push({ label: clientData?.name ?? "Loading..." })
+    }
   } else if (segments[0] === "knowledge") {
     crumbs.push({ label: "Knowledge Base" })
   }
-
-  return crumbs
-}
-
-export function TopBar() {
-  const crumbs = useBreadcrumbs()
 
   return (
     <header className="sticky top-0 z-10 flex h-14 items-center justify-between border-b border-slate-200/60 bg-white/80 px-6 backdrop-blur-sm">
       <Breadcrumb>
         <BreadcrumbList>
           {crumbs.map((crumb, i) => (
-            <BreadcrumbItem key={i}>
+            <React.Fragment key={i}>
               {i > 0 && <BreadcrumbSeparator />}
-              {crumb.href ? (
-                <BreadcrumbLink href={crumb.href}>{crumb.label}</BreadcrumbLink>
-              ) : (
-                <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
-              )}
-            </BreadcrumbItem>
+              <BreadcrumbItem>
+                {crumb.href ? (
+                  <BreadcrumbLink href={crumb.href}>{crumb.label}</BreadcrumbLink>
+                ) : (
+                  <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
+                )}
+              </BreadcrumbItem>
+            </React.Fragment>
           ))}
         </BreadcrumbList>
       </Breadcrumb>

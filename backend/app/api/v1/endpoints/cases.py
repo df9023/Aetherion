@@ -277,3 +277,115 @@ async def generate_recommendation(
 
     await db.commit()
     return recommendation
+
+
+@router.post("/{case_id}/generate-brief")
+async def generate_meeting_brief(
+    case_id: UUID,
+    body: GenerateRecommendationRequest,
+    db: DbSession,
+    current_user: CurrentUser,
+    organization_id: OrganizationId,
+) -> dict:
+    """Generate an AI meeting preparation brief for a case.
+
+    An advisor clicks 'Prepare Meeting' in the Workbench and this endpoint fires.
+    Returns the raw structured brief (not persisted to DB).
+    """
+    settings = get_settings()
+    if not settings.anthropic_api_key:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="ANTHROPIC_API_KEY not configured. Cannot generate meeting brief.",
+        )
+
+    # Load case (org-scoped)
+    result = await db.execute(
+        select(Case).where(Case.id == case_id, Case.organization_id == organization_id)
+    )
+    case = result.scalar_one_or_none()
+    if not case:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Case not found")
+
+    # Load client
+    result = await db.execute(
+        select(Client).where(
+            Client.id == case.client_id, Client.organization_id == organization_id
+        )
+    )
+    client = result.scalar_one_or_none()
+    if not client:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Case has no valid client. Attach a client before generating.",
+        )
+
+    # Build context dict
+    context = {
+        "client": {
+            "name": client.name,
+            "date_of_birth": str(client.date_of_birth),
+            "employment_status": client.employment_status.value,
+            "employer_name": client.employer_name,
+            "collective_agreement": client.collective_agreement.value,
+            "annual_income": str(client.annual_income) if client.annual_income else None,
+            "desired_retirement_age": client.desired_retirement_age,
+            "risk_profile": client.risk_profile.value if client.risk_profile else None,
+        },
+        "case": {
+            "id": str(case.id),
+            "title": case.title,
+            "case_type": case.case_type.value,
+            "summary": case.summary,
+        },
+    }
+
+    # Retrieve relevant knowledge via RAG
+    memory_service = MemoryService(db)
+    search_text = f"{case.title} {case.summary or ''} {case.case_type.value} {client.collective_agreement.value} mötesförberedelse"
+    if body.additional_context:
+        search_text += f" {body.additional_context}"
+
+    knowledge_items = await memory_service.get_relevant_knowledge(
+        organization_id=organization_id,
+        context=search_text,
+        limit=5,
+    )
+
+    knowledge_dicts = [
+        {
+            "id": str(item.id),
+            "title": item.title,
+            "content": item.content,
+            "category": item.category.value,
+            "source": item.source,
+            "tags": item.tags,
+        }
+        for item in knowledge_items
+    ]
+
+    # Generate meeting brief via Reasoner
+    reasoner = ReasonerService(db)
+    brief = await reasoner.generate_meeting_brief(
+        case_id=case.id,
+        context=context,
+        knowledge_items=knowledge_dicts,
+        additional_context=body.additional_context,
+    )
+
+    # Audit entry
+    audit = AuditEntry(
+        case_id=case.id,
+        action=AuditAction.MEETING_BRIEF_GENERATED,
+        actor_id=current_user.id,
+        actor_type=ActorType.SYSTEM,
+        details={
+            "llm_model": "claude-sonnet-4-20250514",
+            "prompt_template": "meeting_brief.j2",
+            "knowledge_items_retrieved": [str(item.id) for item in knowledge_items],
+        },
+    )
+    db.add(audit)
+    await db.commit()
+
+    return brief

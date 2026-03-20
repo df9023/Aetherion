@@ -2,8 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { Plus, Search, Clock } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Search, Clock } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
@@ -15,6 +14,7 @@ import {
 } from "@/components/ui/select"
 import { useCases } from "@/lib/hooks"
 import { caseTypeLabels, statusStyles, statusLabels } from "@/lib/labels"
+import { CreateCaseDialog } from "@/components/create-case-dialog"
 
 function timeAgo(dateStr: string) {
   const diff = Date.now() - new Date(dateStr).getTime()
@@ -41,10 +41,7 @@ export default function CasesPage() {
     <div>
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-slate-900">Cases</h1>
-        <Button className="bg-sky-500 hover:bg-sky-600 text-white rounded-lg">
-          <Plus className="mr-2 h-4 w-4" />
-          New Case
-        </Button>
+        <CreateCaseDialog />
       </div>
 
       <div className="mt-6 flex items-center gap-3">
