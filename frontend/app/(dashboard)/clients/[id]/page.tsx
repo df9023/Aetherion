@@ -2,7 +2,7 @@
 
 import { use } from "react"
 import Link from "next/link"
-import { Building2, Shield, Target, Clock, Briefcase, Plus, Upload } from "lucide-react"
+import { Building2, Shield, Target, Clock, Briefcase, Plus, Upload, User } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useClient, useClientCases } from "@/lib/hooks"
 import { caseTypeLabels, statusStyles, statusLabels } from "@/lib/labels"
@@ -60,7 +60,7 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
   }
 
   return (
-    <div className="space-y-6">
+    <div className="animate-[fadeIn_0.3s_ease-out] space-y-6">
       {/* Client header */}
       <div className="rounded-xl border border-slate-200/60 bg-white p-6 shadow-sm">
         <div className="flex items-center gap-4">
@@ -181,7 +181,7 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
           {!casesLoading &&
             cases.map((c) => (
               <Link key={c.id} href={`/cases/${c.id}`}>
-                <div className="rounded-lg border border-slate-100 p-4 transition-all duration-200 hover:border-slate-300 hover:shadow-sm">
+                <div className="rounded-lg border border-l-4 border-slate-100 border-l-transparent p-4 transition-all duration-200 hover:border-l-sky-400 hover:border-slate-300 hover:shadow-sm">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-2">
                       <Briefcase className="h-4 w-4 text-slate-400" />
@@ -196,9 +196,15 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
                       </span>
                     </div>
                   </div>
-                  <div className="mt-2 flex items-center gap-1 text-xs text-slate-400">
-                    <Clock className="h-3 w-3" />
-                    {timeAgo(c.updated_at)}
+                  <div className="mt-2 flex items-center gap-3 text-xs text-slate-400">
+                    <span className="flex items-center gap-1">
+                      <User className="h-3 w-3" />
+                      Maria Lindqvist
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      {timeAgo(c.updated_at)}
+                    </span>
                   </div>
                 </div>
               </Link>

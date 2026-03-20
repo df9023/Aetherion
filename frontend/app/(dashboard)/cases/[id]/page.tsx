@@ -191,7 +191,7 @@ export default function CaseDetailPage({ params }: { params: Promise<{ id: strin
   const audit = auditEntries ?? []
 
   return (
-    <div className="grid grid-cols-[1fr_400px] gap-6">
+    <div className="animate-[fadeIn_0.3s_ease-out] grid grid-cols-[1fr_400px] gap-6">
       {/* Left column */}
       <div className="space-y-6">
         {/* Case header */}

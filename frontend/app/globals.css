@@ -83,6 +83,11 @@
   --sidebar-ring: oklch(0.685 0.169 237.323);
 }
 
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

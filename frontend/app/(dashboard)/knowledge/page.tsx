@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Search } from "lucide-react"
+import { Search, BookOpen } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -24,7 +24,7 @@ function KnowledgeItem({ item }: { item: KnowledgeItemResponse }) {
   const [expanded, setExpanded] = useState(false)
 
   return (
-    <div className="rounded-xl border border-slate-200/60 bg-white p-5 shadow-sm transition-all duration-200 hover:border-slate-300 hover:shadow-md">
+    <div className="rounded-xl border border-l-4 border-slate-200/60 border-l-transparent bg-white p-5 shadow-sm transition-all duration-200 hover:border-l-sky-400 hover:border-slate-300 hover:shadow-md">
       <div className="flex items-start justify-between">
         <div className="min-w-0 flex-1">
           <h3 className="text-sm font-semibold text-slate-900">{item.title}</h3>
@@ -71,7 +71,7 @@ export default function KnowledgePage() {
   })
 
   return (
-    <div>
+    <div className="animate-[fadeIn_0.3s_ease-out]">
       <h1 className="text-2xl font-semibold text-slate-900">Knowledge Base</h1>
 
       <div className="relative mt-6 max-w-xl">
@@ -81,6 +81,7 @@ export default function KnowledgePage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="pl-9"
+          data-search-input
         />
       </div>
 
@@ -107,7 +108,11 @@ export default function KnowledgePage() {
               <KnowledgeItem key={k.id} item={k} />
             ))}
             {!isLoading && filtered.length === 0 && (
-              <div className="py-12 text-center text-sm text-slate-400">No knowledge items found</div>
+              <div className="flex flex-col items-center py-16">
+                <BookOpen className="h-12 w-12 text-slate-300" />
+                <p className="mt-4 text-sm font-medium text-slate-600">No knowledge items found</p>
+                <p className="mt-1 text-xs text-slate-400">Try adjusting your search or category filter</p>
+              </div>
             )}
           </div>
         </TabsContent>

@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { Search, Building2, Shield } from "lucide-react"
+import { Search, Building2, Shield, Users } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useClients } from "@/lib/hooks"
@@ -31,7 +31,7 @@ export default function ClientsPage() {
   )
 
   return (
-    <div>
+    <div className="animate-[fadeIn_0.3s_ease-out]">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-slate-900">Clients</h1>
         <CreateClientDialog />
@@ -44,6 +44,7 @@ export default function ClientsPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="pl-9"
+          data-search-input
         />
       </div>
 
@@ -59,7 +60,7 @@ export default function ClientsPage() {
         {!isLoading &&
           filtered.map((c) => (
             <Link key={c.id} href={`/clients/${c.id}`}>
-              <div className="rounded-xl border border-slate-200/60 bg-white p-5 shadow-sm transition-all duration-200 hover:border-slate-300 hover:shadow-md">
+              <div className="rounded-xl border border-l-4 border-slate-200/60 border-l-transparent bg-white p-5 shadow-sm transition-all duration-200 hover:border-l-sky-400 hover:border-slate-300 hover:shadow-md">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-sm font-medium text-slate-600">
                     {c.name
@@ -108,7 +109,14 @@ export default function ClientsPage() {
             </Link>
           ))}
         {!isLoading && filtered.length === 0 && (
-          <div className="col-span-full py-12 text-center text-sm text-slate-400">No clients found</div>
+          <div className="col-span-full flex flex-col items-center py-16">
+            <Users className="h-12 w-12 text-slate-300" />
+            <p className="mt-4 text-sm font-medium text-slate-600">No clients found</p>
+            <p className="mt-1 text-xs text-slate-400">Try adjusting your search or add a new client</p>
+            <div className="mt-4">
+              <CreateClientDialog />
+            </div>
+          </div>
         )}
       </div>
     </div>
