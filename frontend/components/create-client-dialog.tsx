@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -33,10 +34,19 @@ const EMPTY_FORM = {
   risk_profile: "",
 }
 
-export function CreateClientDialog() {
-  const [open, setOpen] = useState(false)
+interface CreateClientDialogProps {
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
+}
+
+export function CreateClientDialog({ open: controlledOpen, onOpenChange: controlledOnOpenChange }: CreateClientDialogProps) {
+  const [internalOpen, setInternalOpen] = useState(false)
   const [form, setForm] = useState(EMPTY_FORM)
   const createClient = useCreateClient()
+
+  const isControlled = controlledOpen !== undefined
+  const open = isControlled ? controlledOpen : internalOpen
+  const setOpen = isControlled ? controlledOnOpenChange! : setInternalOpen
 
   function set(field: string, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }))
@@ -65,47 +75,67 @@ export function CreateClientDialog() {
     )
   }
 
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button className="bg-sky-500 hover:bg-sky-600 text-white rounded-lg">
-          <Plus className="mr-2 h-4 w-4" />
-          New Client
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>New Client</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="mt-4 grid grid-cols-2 gap-4">
+  const dialogContent = (
+    <DialogContent className="max-w-2xl">
+      <DialogHeader>
+        <DialogTitle>New Client</DialogTitle>
+      </DialogHeader>
+
+      <form onSubmit={handleSubmit} className="max-h-96 space-y-4 overflow-y-auto py-4">
+        <div className="grid grid-cols-2 gap-x-4 gap-y-4">
+          {/* Name */}
           <div className="col-span-2">
-            <Label htmlFor="name">Name *</Label>
-            <Input id="name" required value={form.name} onChange={(e) => set("name", e.target.value)} />
+            <Label htmlFor="name" className="mb-2 block text-sm font-medium text-slate-700">
+              Name *
+            </Label>
+            <Input
+              id="name"
+              required
+              value={form.name}
+              onChange={(e) => set("name", e.target.value)}
+              placeholder="Full name"
+              className="rounded-lg border-slate-200"
+            />
           </div>
+
+          {/* Date of Birth */}
           <div>
-            <Label htmlFor="dob">Date of Birth *</Label>
-            <Input id="dob" type="date" required value={form.date_of_birth} onChange={(e) => set("date_of_birth", e.target.value)} />
+            <Label htmlFor="dob" className="mb-2 block text-sm font-medium text-slate-700">
+              Date of Birth *
+            </Label>
+            <Input
+              id="dob"
+              type="date"
+              required
+              value={form.date_of_birth}
+              onChange={(e) => set("date_of_birth", e.target.value)}
+              className="rounded-lg border-slate-200"
+            />
           </div>
+
+          {/* Employer */}
           <div>
-            <Label>Employment Status *</Label>
-            <Select required value={form.employment_status} onValueChange={(v) => set("employment_status", v)}>
-              <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="employed">Employed</SelectItem>
-                <SelectItem value="self_employed">Self-employed</SelectItem>
-                <SelectItem value="retired">Retired</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
-              </SelectContent>
-            </Select>
+            <Label htmlFor="employer" className="mb-2 block text-sm font-medium text-slate-700">
+              Employer
+            </Label>
+            <Input
+              id="employer"
+              value={form.employer_name}
+              onChange={(e) => set("employer_name", e.target.value)}
+              placeholder="e.g., Volvo Group AB"
+              className="rounded-lg border-slate-200"
+            />
           </div>
+
+          {/* Collective Agreement */}
           <div>
-            <Label htmlFor="employer">Employer Name</Label>
-            <Input id="employer" value={form.employer_name} onChange={(e) => set("employer_name", e.target.value)} />
-          </div>
-          <div>
-            <Label>Collective Agreement *</Label>
+            <Label htmlFor="agreement" className="mb-2 block text-sm font-medium text-slate-700">
+              Collective Agreement *
+            </Label>
             <Select required value={form.collective_agreement} onValueChange={(v) => set("collective_agreement", v)}>
-              <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
+              <SelectTrigger id="agreement">
+                <SelectValue placeholder="Select agreement..." />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="ITP1">ITP1</SelectItem>
                 <SelectItem value="ITP2">ITP2</SelectItem>
@@ -118,18 +148,52 @@ export function CreateClientDialog() {
               </SelectContent>
             </Select>
           </div>
+
+          {/* Annual Income */}
           <div>
-            <Label htmlFor="income">Annual Income (SEK)</Label>
-            <Input id="income" type="number" value={form.annual_income} onChange={(e) => set("annual_income", e.target.value)} />
+            <div className="mb-2 flex items-end justify-between">
+              <Label htmlFor="annualIncome" className="text-sm font-medium text-slate-700">
+                Annual Income
+              </Label>
+              <span className="text-xs text-slate-400">SEK</span>
+            </div>
+            <Input
+              id="annualIncome"
+              type="number"
+              value={form.annual_income}
+              onChange={(e) => set("annual_income", e.target.value)}
+              placeholder="e.g., 684000"
+              className="rounded-lg border-slate-200"
+            />
           </div>
+
+          {/* Employment Status */}
           <div>
-            <Label htmlFor="retage">Desired Retirement Age</Label>
-            <Input id="retage" type="number" value={form.desired_retirement_age} onChange={(e) => set("desired_retirement_age", e.target.value)} />
+            <Label htmlFor="employmentStatus" className="mb-2 block text-sm font-medium text-slate-700">
+              Employment Status *
+            </Label>
+            <Select required value={form.employment_status} onValueChange={(v) => set("employment_status", v)}>
+              <SelectTrigger id="employmentStatus">
+                <SelectValue placeholder="Select status..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="employed">Employed</SelectItem>
+                <SelectItem value="self_employed">Self-employed</SelectItem>
+                <SelectItem value="retired">Retired</SelectItem>
+                <SelectItem value="other">Other</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
+
+          {/* Risk Profile */}
           <div>
-            <Label>Risk Profile</Label>
+            <Label htmlFor="riskProfile" className="mb-2 block text-sm font-medium text-slate-700">
+              Risk Profile
+            </Label>
             <Select value={form.risk_profile} onValueChange={(v) => set("risk_profile", v)}>
-              <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
+              <SelectTrigger id="riskProfile">
+                <SelectValue placeholder="Select risk profile..." />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="low">Low</SelectItem>
                 <SelectItem value="moderate">Moderate</SelectItem>
@@ -137,21 +201,62 @@ export function CreateClientDialog() {
               </SelectContent>
             </Select>
           </div>
-          <div className="col-span-2 flex justify-end gap-3 pt-2">
-            <Button type="button" variant="outline" className="rounded-lg" onClick={() => setOpen(false)}>
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              className="bg-sky-500 hover:bg-sky-600 text-white rounded-lg"
-              disabled={createClient.isPending || !form.name || !form.date_of_birth || !form.employment_status || !form.collective_agreement}
-            >
-              {createClient.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Create Client
-            </Button>
+
+          {/* Desired Retirement Age */}
+          <div>
+            <Label htmlFor="retirementAge" className="mb-2 block text-sm font-medium text-slate-700">
+              Desired Retirement Age
+            </Label>
+            <Input
+              id="retirementAge"
+              type="number"
+              value={form.desired_retirement_age}
+              onChange={(e) => set("desired_retirement_age", e.target.value)}
+              placeholder="e.g., 65"
+              className="rounded-lg border-slate-200"
+            />
           </div>
-        </form>
-      </DialogContent>
+        </div>
+
+        <DialogFooter className="flex justify-end gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setOpen(false)}
+            className="border-slate-200 text-slate-700"
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            className="bg-sky-500 text-white hover:bg-sky-600"
+            disabled={createClient.isPending || !form.name || !form.date_of_birth || !form.employment_status || !form.collective_agreement}
+          >
+            {createClient.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Create Client
+          </Button>
+        </DialogFooter>
+      </form>
+    </DialogContent>
+  )
+
+  if (isControlled) {
+    return (
+      <Dialog open={open} onOpenChange={setOpen}>
+        {dialogContent}
+      </Dialog>
+    )
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button className="gap-2 bg-sky-500 text-white hover:bg-sky-600">
+          <Plus className="h-4 w-4" />
+          New Client
+        </Button>
+      </DialogTrigger>
+      {dialogContent}
     </Dialog>
   )
 }
