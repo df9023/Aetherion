@@ -1,6 +1,6 @@
 "use client"
 
-import { AlertTriangle, HelpCircle } from "lucide-react"
+import { HelpCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { MeetingBriefResponse } from "@/lib/hooks"
 

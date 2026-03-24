@@ -377,11 +377,11 @@ class DocumentService:
                 bold_run.bold = True
                 gp = doc.add_paragraph()
                 gp.paragraph_format.left_indent = Inches(0.5)
-                gp.add_run(f"Grund: ").bold = True
+                gp.add_run("Grund: ").bold = True
                 gp.add_run(a["basis"])
                 ip = doc.add_paragraph()
                 ip.paragraph_format.left_indent = Inches(0.5)
-                ip.add_run(f"Konsekvens om fel: ").bold = True
+                ip.add_run("Konsekvens om fel: ").bold = True
                 ip.add_run(a["impact_if_wrong"])
 
         if evidences:

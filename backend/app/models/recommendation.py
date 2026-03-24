@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Optional
 from decimal import Decimal
 
-from sqlalchemy import String, Text, DateTime, ForeignKey, Integer, Numeric
+from sqlalchemy import Text, DateTime, ForeignKey, Integer, Numeric
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 

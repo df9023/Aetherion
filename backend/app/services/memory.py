@@ -123,7 +123,7 @@ class MemoryService:
         # Build base query with organization scope
         conditions = [
             KnowledgeItem.organization_id == organization_id,
-            KnowledgeItem.is_active == True,
+            KnowledgeItem.is_active.is_(True),
         ]
 
         if category:
@@ -136,11 +136,11 @@ class MemoryService:
         # Check effective/expiry dates
         today = date.today()
         conditions.append(
-            (KnowledgeItem.effective_date == None)
+            (KnowledgeItem.effective_date.is_(None))
             | (KnowledgeItem.effective_date <= today)
         )
         conditions.append(
-            (KnowledgeItem.expiry_date == None) | (KnowledgeItem.expiry_date >= today)
+            (KnowledgeItem.expiry_date.is_(None)) | (KnowledgeItem.expiry_date >= today)
         )
 
         # Use pgvector's cosine distance for similarity search
