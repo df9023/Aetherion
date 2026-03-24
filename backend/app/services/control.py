@@ -1,18 +1,14 @@
-from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.case import Case
 from app.models.recommendation import Recommendation
 from app.models.audit_entry import AuditEntry
 from app.models.base import (
     AuditAction,
     ActorType,
-    RecommendationStatus,
-    CaseStatus,
 )
 
 

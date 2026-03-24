@@ -12,7 +12,6 @@ from app.models.base import CaseType, CaseStatus, ValueEnum
 if TYPE_CHECKING:
     from app.models.client import Client
     from app.models.user import User
-    from app.models.organization import Organization
     from app.models.recommendation import Recommendation
     from app.models.audit_entry import AuditEntry
     from app.models.document import Document

@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { apiFetch, apiDownload } from "./api"
+import { apiFetch, apiUpload, apiDownload } from "./api"
 
 // Types matching backend schemas
 export interface CaseResponse {
@@ -115,6 +115,54 @@ export interface DocumentResponse {
   version: number
 }
 
+export interface MeetingBriefResponse {
+  client_overview: string
+  pension_situation: {
+    pillar: string
+    description: string
+    estimated_value: string
+    notes: string
+  }[]
+  key_issues: {
+    title: string
+    description: string
+    severity: "high" | "medium" | "low"
+  }[]
+  pre_modeled_scenarios?: {
+    name: string
+    description: string
+    projected_outcome: Record<string, string>
+  }[]
+  talking_points: string[]
+  open_questions: string[]
+  meeting_agenda: {
+    topic: string
+    duration_minutes: number
+    description: string
+  }[]
+}
+
+export interface ExtractedField {
+  field_name: string
+  value: string
+  confidence: number
+  source_text?: string
+}
+
+export interface FundAllocation {
+  fund_name: string
+  allocation_percent: number
+  fee_percent?: number
+  confidence: number
+}
+
+export interface DocumentExtractionResponse {
+  document_type: string
+  extracted_fields: ExtractedField[]
+  fund_allocations: FundAllocation[]
+  other_observations: string
+}
+
 // Cases
 export function useCases() {
   return useQuery({
@@ -181,6 +229,21 @@ export function useGenerateRecommendation(caseId: string) {
   })
 }
 
+// Generate meeting brief (mutation)
+export function useGenerateMeetingBrief(caseId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (additionalContext?: string) =>
+      apiFetch<MeetingBriefResponse>(`/cases/${caseId}/generate-brief`, {
+        method: "POST",
+        body: JSON.stringify({ additional_context: additionalContext || null }),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["cases", caseId, "audit"] })
+    },
+  })
+}
+
 // Audit trail
 export function useCaseAudit(caseId: string) {
   return useQuery({
@@ -235,4 +298,109 @@ export async function downloadDocument(documentId: string, filename: string) {
   a.download = filename
   a.click()
   URL.revokeObjectURL(url)
+}
+
+// Create client
+export function useCreateClient() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (data: {
+      name: string
+      date_of_birth: string
+      employment_status: string
+      collective_agreement: string
+      employer_name?: string
+      annual_income?: number
+      desired_retirement_age?: number
+      risk_profile?: string
+    }) =>
+      apiFetch<ClientResponse>("/clients", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["clients"] })
+    },
+  })
+}
+
+// Create case
+export function useCreateCase() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (data: {
+      title: string
+      case_type: string
+      client_id: string
+      assigned_to: string
+      summary?: string
+      meeting_date?: string
+    }) =>
+      apiFetch<CaseResponse>("/cases", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["cases"] })
+    },
+  })
+}
+
+// Update case
+export function useUpdateCase(caseId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (data: {
+      title?: string
+      case_type?: string
+      status?: string
+      summary?: string
+      assigned_to?: string
+    }) =>
+      apiFetch<CaseResponse>(`/cases/${caseId}`, {
+        method: "PATCH",
+        body: JSON.stringify(data),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["cases"] })
+      queryClient.invalidateQueries({ queryKey: ["cases", caseId] })
+    },
+  })
+}
+
+// Client cases (filtered client-side)
+export function useClientCases(clientId: string) {
+  const { data: cases } = useCases()
+  const clientCases = cases?.filter((c) => c.client_id === clientId) ?? []
+  return { data: clientCases, isLoading: !cases }
+}
+
+// Document ingestion
+export function useIngestDocument(clientId: string) {
+  return useMutation({
+    mutationFn: (file: File) => {
+      const formData = new FormData()
+      formData.append("file", file)
+      return apiUpload<DocumentExtractionResponse>(
+        `/clients/${clientId}/ingest-document`,
+        formData,
+      )
+    },
+  })
+}
+
+// Apply extraction
+export function useApplyExtraction(clientId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (data: Record<string, string | number>) =>
+      apiFetch<ClientResponse>(`/clients/${clientId}/apply-extraction`, {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["clients", clientId] })
+      queryClient.invalidateQueries({ queryKey: ["clients"] })
+    },
+  })
 }

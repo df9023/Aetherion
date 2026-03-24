@@ -6,10 +6,9 @@ from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import CurrentUser, DbSession, OrganizationId
-from app.models.base import DocumentType, FileFormat
+from app.models.base import FileFormat
 from app.models.case import Case
 from app.models.document import Document
 from app.models.recommendation import Recommendation

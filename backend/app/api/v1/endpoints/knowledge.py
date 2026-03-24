@@ -44,7 +44,7 @@ async def list_knowledge_items(
         select(KnowledgeItem)
         .where(
             KnowledgeItem.organization_id == organization_id,
-            KnowledgeItem.is_active == True,
+            KnowledgeItem.is_active.is_(True),
         )
         .order_by(KnowledgeItem.created_at.desc())
         .offset(skip)

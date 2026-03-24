@@ -1,0 +1,61 @@
+Förbered en strukturerad mötesförberedelse för ett rådgivningsmöte med klient.
+
+## Ärendetyp
+{{ context.case.case_type }}
+
+## Klient- och ärendeinformation
+{{ context | tojson(indent=2) }}
+
+{% if additional_context %}
+## Ytterligare kontext från rådgivaren
+{{ additional_context }}
+{% endif %}
+
+## Hämtade kunskapsartiklar
+
+Använd dessa för att ge specifik och korrekt information i mötesförberedelsen.
+{% if knowledge_items %}
+{% for item in knowledge_items %}
+### [{{ item.id }}] {{ item.title }}
+**Kategori:** {{ item.category }}
+**Källa:** {{ item.source }}
+{% if item.tags %}**Taggar:** {{ item.tags | join(', ') }}{% endif %}
+{% if item.effective_date %}**Gäller från:** {{ item.effective_date }}{% endif %}
+
+{{ item.content }}
+
+---
+{% endfor %}
+{% else %}
+*Inga kunskapsartiklar hämtade. Basera mötesförberedelsen på din expertkunskap.*
+{% endif %}
+
+## Instruktioner
+
+Producera en komplett mötesförberedelse som hjälper rådgivaren att genomföra ett effektivt och välinformerat kundmöte.
+
+### Klientöversikt
+- Sammanfatta klientens bakgrund, ekonomiska situation och familjeförhållanden
+- Identifiera relevanta livshändelser eller förändringar som påverkar pensionssituationen
+
+### Pensionssituation (tre pelare)
+- **Allmän pension**: Beskriv klientens situation avseende inkomstpension, premiepension och eventuellt tilläggspension
+- **Tjänstepension**: Identifiera kollektivavtal ({{ context.client.collective_agreement | default('ej angivet') }}), arbetsgivarens pensionsplan, fondval, och eventuella brister
+- **Privat sparande**: Beskriv eventuellt privat pensionssparande, ISK, kapitalförsäkring etc.
+
+### Nyckelfrågor och risker
+- Identifiera konkreta problem eller risker i klientens pensionssituation
+- Prioritera efter allvarlighetsgrad (hög/medel/låg)
+- Inkludera t.ex. otillräckligt skydd, suboptimala fondval, avgiftsproblem, luckor i försäkringsskydd
+
+### Förmodellerade scenarier
+- Räkna fram 2-3 konkreta scenarier som rådgivaren kan presentera
+- Inkludera nuvarande plan som basscenario
+- Visa projekterat utfall med nyckeltal (månadspension, total kostnad, etc.)
+
+### Samtalsguide
+- Lista de viktigaste punkterna att ta upp under mötet
+- Formulera öppna frågor att ställa till klienten för att samla saknad information
+- Föreslå en konkret mötesagenda med tidsestimat
+
+Producera din mötesförberedelse genom att använda tool_use-verktyget `generate_meeting_brief`.

@@ -12,7 +12,6 @@ from app.models.base import KnowledgeCategory, ValueEnum
 
 if TYPE_CHECKING:
     from app.models.organization import Organization
-    from app.models.user import User
 
 
 class KnowledgeItem(Base):
