@@ -65,7 +65,7 @@ export default function CaseDetailPage({ params }: { params: Promise<{ id: strin
     generateBrief.mutate(undefined, {
       onSuccess: (data) => {
         setMeetingBrief(data)
-        toast.success("Meeting brief generated")
+        toast.success("Mötesunderlag genererat")
       },
       onError: (err) => toast.error(err.message),
     })
@@ -76,7 +76,7 @@ export default function CaseDetailPage({ params }: { params: Promise<{ id: strin
       generateDoc.mutate(format, {
         onSuccess: (doc) => {
           setGeneratedDoc(doc)
-          toast.success("Document generated")
+          toast.success("Dokument genererat")
         },
         onError: (err) => toast.error(err.message),
       })
@@ -94,7 +94,7 @@ export default function CaseDetailPage({ params }: { params: Promise<{ id: strin
     (status: string) => {
       updateCase.mutate(
         { status },
-        { onSuccess: () => toast.success(`Status changed to ${status.replace(/_/g, " ")}`) }
+        { onSuccess: () => toast.success("Status uppdaterad") }
       )
     },
     [updateCase]
@@ -103,15 +103,15 @@ export default function CaseDetailPage({ params }: { params: Promise<{ id: strin
   if (caseLoading) {
     return (
       <>
-        <TopBar breadcrumbs={[{ label: "Cases", href: "/cases" }, { label: "Loading..." }]} />
-        <main className="flex flex-1 gap-5 px-6 py-6">
+        <TopBar breadcrumbs={[{ label: "Ärenden", href: "/cases" }, { label: "Laddar..." }]} />
+        <main className="flex flex-1 flex-col gap-5 px-6 py-6 lg:flex-row">
           <div className="flex min-w-0 flex-1 flex-col gap-5">
             <Skeleton className="h-24 rounded-xl" />
             <Skeleton className="h-60 rounded-xl" />
             <Skeleton className="h-40 rounded-xl" />
             <Skeleton className="h-96 rounded-xl" />
           </div>
-          <div className="flex w-[380px] shrink-0 flex-col gap-5">
+          <div className="flex w-full shrink-0 flex-col gap-5 lg:w-[380px]">
             <Skeleton className="h-80 rounded-xl" />
             <Skeleton className="h-40 rounded-xl" />
           </div>
@@ -123,9 +123,9 @@ export default function CaseDetailPage({ params }: { params: Promise<{ id: strin
   if (!caseData) {
     return (
       <>
-        <TopBar breadcrumbs={[{ label: "Cases", href: "/cases" }, { label: "Not Found" }]} />
+        <TopBar breadcrumbs={[{ label: "Ärenden", href: "/cases" }, { label: "Hittades inte" }]} />
         <main className="flex-1">
-          <div className="py-12 text-center text-slate-400">Case not found</div>
+          <div className="py-12 text-center text-sm text-slate-400">Ärendet hittades inte</div>
         </main>
       </>
     )
@@ -137,11 +137,11 @@ export default function CaseDetailPage({ params }: { params: Promise<{ id: strin
     <>
       <TopBar
         breadcrumbs={[
-          { label: "Cases", href: "/cases" },
+          { label: "Ärenden", href: "/cases" },
           { label: caseData.title.length > 50 ? caseData.title.slice(0, 50) + "…" : caseData.title },
         ]}
       />
-      <main className="flex flex-1 gap-5 px-6 py-6">
+      <main className="flex flex-1 flex-col gap-5 px-6 py-6 lg:flex-row">
         {/* Left column */}
         <div className="flex min-w-0 flex-1 flex-col gap-5">
           <CaseHeaderCard caseData={caseData} onStatusChange={handleStatusChange} />
@@ -162,7 +162,7 @@ export default function CaseDetailPage({ params }: { params: Promise<{ id: strin
         </div>
 
         {/* Right panel */}
-        <div className="flex w-[380px] shrink-0 flex-col gap-5">
+        <div className="flex w-full shrink-0 flex-col gap-5 lg:w-[380px]">
           <KnowledgeBaseCard query={knowledgeQuery} onQueryChange={setKnowledgeQuery} results={knowledgeResults} />
           <AuditTrailCard entries={audit} />
         </div>

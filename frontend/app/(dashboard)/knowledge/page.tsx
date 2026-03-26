@@ -12,14 +12,14 @@ import { categoryStyles, categoryLabels } from "@/lib/labels"
 import { TopBar } from "@/components/top-bar"
 
 const categories = [
-  { value: "all", label: "All" },
-  { value: "product_rule", label: "Product Rules" },
-  { value: "internal_policy", label: "Internal Policy" },
-  { value: "regulatory_requirement", label: "Regulatory" },
-  { value: "playbook", label: "Playbook" },
-  { value: "precedent", label: "Precedent" },
-  { value: "faq", label: "FAQ" },
-  { value: "process_guide", label: "Process Guide" },
+  { value: "all", label: "Alla" },
+  { value: "product_rule", label: "Produktregler" },
+  { value: "internal_policy", label: "Intern policy" },
+  { value: "regulatory_requirement", label: "Regulatoriskt" },
+  { value: "playbook", label: "Handbok" },
+  { value: "precedent", label: "Prejudikat" },
+  { value: "faq", label: "Vanliga frågor" },
+  { value: "process_guide", label: "Processguide" },
 ]
 
 const uploadCategories = categories.filter((c) => c.value !== "all")
@@ -42,7 +42,7 @@ function UploadDialog({ onClose }: { onClose: () => void }) {
     if (dropped?.name.toLowerCase().endsWith(".pdf")) {
       setFile(dropped)
     } else {
-      toast.error("Only PDF files are supported")
+      toast.error("Endast PDF-filer stöds")
     }
   }, [])
 
@@ -67,7 +67,7 @@ function UploadDialog({ onClose }: { onClose: () => void }) {
           clearTimeout(t2)
           setPhase("done")
           setResult(data)
-          toast.success(`${data.items_created} knowledge items created`)
+          toast.success(`${data.items_created} kunskapsobjekt skapade`)
         },
         onError: (err) => {
           clearTimeout(t1)
@@ -81,9 +81,9 @@ function UploadDialog({ onClose }: { onClose: () => void }) {
 
   const phaseLabel: Record<UploadPhase, string> = {
     idle: "",
-    extracting: "Extracting text from PDF...",
-    chunking: "Chunking document into sections...",
-    embedding: "Generating embeddings...",
+    extracting: "Extraherar text från PDF...",
+    chunking: "Delar upp dokumentet i sektioner...",
+    embedding: "Genererar embeddings...",
     done: "",
   }
 
@@ -95,7 +95,7 @@ function UploadDialog({ onClose }: { onClose: () => void }) {
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-          <h3 className="text-sm font-semibold text-slate-800">Upload Knowledge Document</h3>
+          <h3 className="text-base font-semibold text-slate-800">Ladda upp kunskapsdokument</h3>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
             <X className="h-4 w-4" />
           </button>
@@ -108,16 +108,16 @@ function UploadDialog({ onClose }: { onClose: () => void }) {
                 <Check className="h-6 w-6 text-emerald-600" />
               </div>
               <p className="text-sm font-medium text-slate-700">
-                {result.items_created} knowledge items created
+                {result.items_created} kunskapsobjekt skapade
               </p>
-              <p className="mt-1 text-xs text-slate-400">
-                The items are now searchable in the knowledge base.
+              <p className="mt-1 text-sm text-slate-400">
+                Objekten är nu sökbara i kunskapsbasen.
               </p>
               <button
                 onClick={onClose}
-                className="mt-5 rounded-lg bg-sky-500 px-6 py-2 text-sm font-medium text-white hover:bg-sky-600"
+                className="mt-5 rounded-lg bg-sky-500 px-6 py-2.5 text-sm font-medium text-white hover:bg-sky-600"
               >
-                Done
+                Klar
               </button>
             </div>
           ) : (
@@ -148,7 +148,7 @@ function UploadDialog({ onClose }: { onClose: () => void }) {
                   <>
                     <Upload className="mb-2 h-8 w-8 text-slate-300" />
                     <p className="text-sm text-slate-500">
-                      Drop a PDF here or click to browse
+                      Dra en PDF hit eller klicka för att bläddra
                     </p>
                   </>
                 )}
@@ -156,7 +156,7 @@ function UploadDialog({ onClose }: { onClose: () => void }) {
 
               {/* Category */}
               <div>
-                <label className="mb-1 block text-xs font-medium text-slate-600">Category</label>
+                <label className="mb-1 block text-sm font-medium text-slate-600">Kategori</label>
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
@@ -172,7 +172,7 @@ function UploadDialog({ onClose }: { onClose: () => void }) {
 
               {/* Source */}
               <div>
-                <label className="mb-1 block text-xs font-medium text-slate-600">Source</label>
+                <label className="mb-1 block text-sm font-medium text-slate-600">Källa</label>
                 <Input
                   placeholder='e.g., "Collectum — ITP1-avtalet 2024"'
                   value={source}
@@ -183,8 +183,8 @@ function UploadDialog({ onClose }: { onClose: () => void }) {
 
               {/* Tags */}
               <div>
-                <label className="mb-1 block text-xs font-medium text-slate-600">
-                  Tags <span className="text-slate-400">(comma-separated, optional)</span>
+                <label className="mb-1 block text-sm font-medium text-slate-600">
+                  Taggar <span className="text-slate-400">(kommaseparerade, valfritt)</span>
                 </label>
                 <Input
                   placeholder="e.g., ITP1, collectum, 2024"
@@ -209,7 +209,7 @@ function UploadDialog({ onClose }: { onClose: () => void }) {
                 className="flex w-full items-center justify-center gap-2 rounded-lg bg-sky-500 py-2.5 text-sm font-medium text-white transition-colors hover:bg-sky-600 disabled:opacity-50"
               >
                 <Upload className="h-4 w-4" />
-                Upload &amp; Process
+                Ladda upp &amp; bearbeta
               </button>
             </>
           )}
@@ -270,20 +270,20 @@ function KnowledgePageContent() {
 
   return (
     <>
-      <TopBar breadcrumbs={[{ label: "Knowledge Base" }]} />
+      <TopBar breadcrumbs={[{ label: "Kunskapsbas" }]} />
       <main className="flex-1 bg-slate-50">
         <div className="mx-auto max-w-4xl px-6 py-8">
           {/* Header */}
           <div className="mb-8 flex items-center justify-between">
-            <h1 className="text-2xl font-semibold text-slate-900">
-              Knowledge Base
+            <h1 className="text-xl font-semibold text-slate-900">
+              Kunskapsbas
             </h1>
             <button
               onClick={() => setShowUpload(true)}
-              className="flex items-center gap-2 rounded-lg bg-sky-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-sky-600"
+              className="flex items-center gap-2 rounded-lg bg-sky-500 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-sky-600"
             >
               <Upload className="h-4 w-4" />
-              Upload Document
+              Ladda upp dokument
             </button>
           </div>
 
@@ -292,7 +292,7 @@ function KnowledgePageContent() {
             <div className="relative">
               <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
               <Input
-                placeholder="Search knowledge..."
+                placeholder="Sök i kunskapsbasen..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="bg-white border-slate-200/60 pl-10"
@@ -307,7 +307,7 @@ function KnowledgePageContent() {
               <button
                 key={cat.value}
                 onClick={() => setActiveCategory(cat.value)}
-                className={`rounded-full px-3 py-1 text-xs font-medium transition-all ${
+                className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
                   activeCategory === cat.value
                     ? "bg-sky-500 text-white"
                     : "bg-slate-100 text-slate-600 hover:bg-slate-200"
@@ -371,7 +371,7 @@ function KnowledgePageContent() {
                           {item.tags.map((tag, tagIdx) => (
                             <span
                               key={tagIdx}
-                              className="inline-flex rounded px-1.5 py-0.5 text-[10px] bg-slate-100 text-slate-500"
+                              className="inline-flex rounded px-1.5 py-0.5 text-xs bg-slate-100 text-slate-500"
                             >
                               {tag}
                             </span>
@@ -384,9 +384,9 @@ function KnowledgePageContent() {
 
                         <button
                           onClick={() => toggleExpanded(item.id)}
-                          className="mt-2 text-xs font-medium text-sky-600 hover:text-sky-700"
+                          className="mt-2 text-sm font-medium text-sky-600 hover:text-sky-700"
                         >
-                          {isExpanded ? "Show less" : "Show more"}
+                          {isExpanded ? "Visa mindre" : "Visa mer"}
                         </button>
                       </div>
 
@@ -409,11 +409,11 @@ function KnowledgePageContent() {
             !isLoading && (
               <div className="flex flex-col items-center justify-center py-12">
                 <BookOpen className="mb-3 h-12 w-12 text-slate-300" />
-                <p className="mb-1 font-medium text-slate-600">
-                  No knowledge items found
+                <p className="mb-1 text-base font-medium text-slate-600">
+                  Inga kunskapsobjekt hittades
                 </p>
                 <p className="text-sm text-slate-400">
-                  Try adjusting your search or category filter
+                  Försök justera din sökning eller kategorifilter
                 </p>
               </div>
             )

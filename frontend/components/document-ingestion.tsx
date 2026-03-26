@@ -23,19 +23,19 @@ import type {
 } from "@/lib/hooks"
 
 const fieldLabels: Record<string, string> = {
-  name: "Name",
-  date_of_birth: "Date of Birth",
-  employer_name: "Employer",
-  collective_agreement: "Collective Agreement",
-  annual_income: "Annual Income",
-  monthly_income: "Monthly Income",
-  employment_status: "Employment Status",
-  pension_provider: "Pension Provider",
-  total_fees_percent: "Total Fees",
-  survivor_protection: "Survivor Protection",
-  pension_capital: "Pension Capital",
-  desired_retirement_age: "Retirement Age",
-  risk_profile: "Risk Profile",
+  name: "Namn",
+  date_of_birth: "Födelsedatum",
+  employer_name: "Arbetsgivare",
+  collective_agreement: "Kollektivavtal",
+  annual_income: "Årsinkomst",
+  monthly_income: "Månadsinkomst",
+  employment_status: "Anställningsstatus",
+  pension_provider: "Pensionsleverantör",
+  total_fees_percent: "Totala avgifter",
+  survivor_protection: "Efterlevandeskydd",
+  pension_capital: "Pensionskapital",
+  desired_retirement_age: "Önskad pensionsålder",
+  risk_profile: "Riskprofil",
 }
 
 const APPLICABLE_FIELDS = new Set([
@@ -92,7 +92,7 @@ export function DocumentIngestion({ clientId, client }: Props) {
   const handleFile = useCallback(
     (file: File) => {
       if (!file.name.toLowerCase().endsWith(".pdf")) {
-        toast.error("Only PDF files are supported")
+        toast.error("Endast PDF-filer stöds")
         return
       }
       ingest.mutate(file, {
@@ -139,13 +139,13 @@ export function DocumentIngestion({ clientId, client }: Props) {
     }
 
     if (Object.keys(data).length === 0) {
-      toast.error("No applicable fields selected")
+      toast.error("Inga tillämpliga fält valda")
       return
     }
 
     apply.mutate(data, {
       onSuccess: () => {
-        toast.success("Client profile updated")
+        toast.success("Klientprofil uppdaterad")
         setExtraction(null)
         setSelectedFields(new Set())
       },
@@ -186,9 +186,9 @@ export function DocumentIngestion({ clientId, client }: Props) {
           onDrop={handleDrop}
         >
           <Upload className="mb-3 h-10 w-10 text-slate-300" />
-          <p className="mb-1 text-sm font-medium text-slate-700">Upload pension document</p>
-          <p className="mb-3 text-xs text-slate-400">Drop a PDF here or click to browse</p>
-          <p className="text-xs text-slate-400">Supported formats: PDF. Max size 10 MB.</p>
+          <p className="mb-1 text-sm font-medium text-slate-700">Ladda upp pensionsdokument</p>
+          <p className="mb-3 text-xs text-slate-400">Dra en PDF hit eller klicka för att bläddra</p>
+          <p className="text-xs text-slate-400">Format som stöds: PDF. Max 10 MB.</p>
         </div>
         <input
           ref={fileInputRef}
@@ -210,9 +210,9 @@ export function DocumentIngestion({ clientId, client }: Props) {
     return (
       <div className="space-y-4">
         {[
-          { step: 1, label: "Extracting text from document..." },
-          { step: 2, label: "Analyzing pension data..." },
-          { step: 3, label: "Building structured output..." },
+          { step: 1, label: "Extraherar text från dokument..." },
+          { step: 2, label: "Analyserar pensionsdata..." },
+          { step: 3, label: "Bygger strukturerad utdata..." },
         ].map((item, idx) => (
           <div key={idx} className="flex items-start gap-3">
             <div className="mt-0.5 shrink-0">
@@ -231,7 +231,7 @@ export function DocumentIngestion({ clientId, client }: Props) {
             </div>
           </div>
         ))}
-        <p className="mt-4 text-xs text-slate-400">This may take 15-30 seconds</p>
+        <p className="mt-4 text-xs text-slate-400">Detta kan ta 15–30 sekunder</p>
       </div>
     )
   }
@@ -241,7 +241,7 @@ export function DocumentIngestion({ clientId, client }: Props) {
 
   return (
     <div>
-      <h4 className="mb-4 text-base font-semibold text-slate-900">Review Extracted Data</h4>
+      <h4 className="mb-4 text-base font-semibold text-slate-900">Granska extraherad data</h4>
 
       <div className="mb-6 max-h-96 space-y-3 overflow-y-auto">
         {extraction.extracted_fields.map((field, idx) => {
@@ -297,14 +297,14 @@ export function DocumentIngestion({ clientId, client }: Props) {
       {extraction.fund_allocations.length > 0 && (
         <div className="mb-6 rounded-lg bg-slate-50 p-3">
           <p className="mb-3 text-xs font-medium uppercase tracking-wider text-slate-400">
-            Fund Allocations
+            Fondfördelning
           </p>
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-slate-200 text-slate-600">
-                <th className="px-2 py-2 text-left font-medium">Fund Name</th>
-                <th className="px-2 py-2 text-right font-medium">Allocation</th>
-                <th className="px-2 py-2 text-right font-medium">Fee</th>
+                <th className="px-2 py-2 text-left font-medium">Fondnamn</th>
+                <th className="px-2 py-2 text-right font-medium">Fördelning</th>
+                <th className="px-2 py-2 text-right font-medium">Avgift</th>
               </tr>
             </thead>
             <tbody>
@@ -329,10 +329,10 @@ export function DocumentIngestion({ clientId, client }: Props) {
           className="flex-1 bg-sky-500 text-white hover:bg-sky-600"
         >
           {apply.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Apply Selected Fields
+          Tillämpa valda fält
         </Button>
         <Button variant="outline" className="px-4" onClick={handleReset}>
-          Cancel
+          Avbryt
         </Button>
       </div>
     </div>

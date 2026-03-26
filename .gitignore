@@ -66,3 +66,5 @@ generated_documents/
 # Knowledge base source documents (PDFs/TXTs are real docs, not tracked)
 backend/data/knowledge/*.pdf
 backend/data/knowledge/*.txt
+
+.cursor/mcp.json

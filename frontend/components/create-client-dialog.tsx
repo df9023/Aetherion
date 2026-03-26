@@ -67,7 +67,7 @@ export function CreateClientDialog({ open: controlledOpen, onOpenChange: control
       },
       {
         onSuccess: () => {
-          toast.success("Client created")
+          toast.success("Klient skapad")
           setForm(EMPTY_FORM)
           setOpen(false)
         },
@@ -78,7 +78,7 @@ export function CreateClientDialog({ open: controlledOpen, onOpenChange: control
   const dialogContent = (
     <DialogContent className="max-w-2xl">
       <DialogHeader>
-        <DialogTitle>New Client</DialogTitle>
+        <DialogTitle>Ny klient</DialogTitle>
       </DialogHeader>
 
       <form onSubmit={handleSubmit} className="max-h-96 space-y-4 overflow-y-auto py-4">
@@ -86,14 +86,14 @@ export function CreateClientDialog({ open: controlledOpen, onOpenChange: control
           {/* Name */}
           <div className="col-span-2">
             <Label htmlFor="name" className="mb-2 block text-sm font-medium text-slate-700">
-              Name *
+              Namn *
             </Label>
             <Input
               id="name"
               required
               value={form.name}
               onChange={(e) => set("name", e.target.value)}
-              placeholder="Full name"
+              placeholder="Fullständigt namn"
               className="rounded-lg border-slate-200"
             />
           </div>
@@ -101,7 +101,7 @@ export function CreateClientDialog({ open: controlledOpen, onOpenChange: control
           {/* Date of Birth */}
           <div>
             <Label htmlFor="dob" className="mb-2 block text-sm font-medium text-slate-700">
-              Date of Birth *
+              Födelsedatum *
             </Label>
             <Input
               id="dob"
@@ -116,7 +116,7 @@ export function CreateClientDialog({ open: controlledOpen, onOpenChange: control
           {/* Employer */}
           <div>
             <Label htmlFor="employer" className="mb-2 block text-sm font-medium text-slate-700">
-              Employer
+              Arbetsgivare
             </Label>
             <Input
               id="employer"
@@ -130,11 +130,11 @@ export function CreateClientDialog({ open: controlledOpen, onOpenChange: control
           {/* Collective Agreement */}
           <div>
             <Label htmlFor="agreement" className="mb-2 block text-sm font-medium text-slate-700">
-              Collective Agreement *
+              Kollektivavtal *
             </Label>
             <Select required value={form.collective_agreement} onValueChange={(v) => set("collective_agreement", v)}>
               <SelectTrigger id="agreement">
-                <SelectValue placeholder="Select agreement..." />
+                <SelectValue placeholder="Välj avtal..." />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="ITP1">ITP1</SelectItem>
@@ -143,8 +143,8 @@ export function CreateClientDialog({ open: controlledOpen, onOpenChange: control
                 <SelectItem value="KAP_KL">KAP-KL</SelectItem>
                 <SelectItem value="AKAP_KL">AKAP-KL</SelectItem>
                 <SelectItem value="PA16">PA16</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
-                <SelectItem value="none">None</SelectItem>
+                <SelectItem value="other">Övrigt</SelectItem>
+                <SelectItem value="none">Inget</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -153,7 +153,7 @@ export function CreateClientDialog({ open: controlledOpen, onOpenChange: control
           <div>
             <div className="mb-2 flex items-end justify-between">
               <Label htmlFor="annualIncome" className="text-sm font-medium text-slate-700">
-                Annual Income
+                Årsinkomst
               </Label>
               <span className="text-xs text-slate-400">SEK</span>
             </div>
@@ -170,17 +170,17 @@ export function CreateClientDialog({ open: controlledOpen, onOpenChange: control
           {/* Employment Status */}
           <div>
             <Label htmlFor="employmentStatus" className="mb-2 block text-sm font-medium text-slate-700">
-              Employment Status *
+              Anställningsstatus *
             </Label>
             <Select required value={form.employment_status} onValueChange={(v) => set("employment_status", v)}>
               <SelectTrigger id="employmentStatus">
-                <SelectValue placeholder="Select status..." />
+                <SelectValue placeholder="Välj status..." />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="employed">Employed</SelectItem>
-                <SelectItem value="self_employed">Self-employed</SelectItem>
-                <SelectItem value="retired">Retired</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
+                <SelectItem value="employed">Anställd</SelectItem>
+                <SelectItem value="self_employed">Egenföretagare</SelectItem>
+                <SelectItem value="retired">Pensionär</SelectItem>
+                <SelectItem value="other">Övrigt</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -188,16 +188,16 @@ export function CreateClientDialog({ open: controlledOpen, onOpenChange: control
           {/* Risk Profile */}
           <div>
             <Label htmlFor="riskProfile" className="mb-2 block text-sm font-medium text-slate-700">
-              Risk Profile
+              Riskprofil
             </Label>
             <Select value={form.risk_profile} onValueChange={(v) => set("risk_profile", v)}>
               <SelectTrigger id="riskProfile">
-                <SelectValue placeholder="Select risk profile..." />
+                <SelectValue placeholder="Välj riskprofil..." />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="low">Low</SelectItem>
-                <SelectItem value="moderate">Moderate</SelectItem>
-                <SelectItem value="high">High</SelectItem>
+                <SelectItem value="low">Låg</SelectItem>
+                <SelectItem value="moderate">Medel</SelectItem>
+                <SelectItem value="high">Hög</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -205,7 +205,7 @@ export function CreateClientDialog({ open: controlledOpen, onOpenChange: control
           {/* Desired Retirement Age */}
           <div>
             <Label htmlFor="retirementAge" className="mb-2 block text-sm font-medium text-slate-700">
-              Desired Retirement Age
+              Önskad pensionsålder
             </Label>
             <Input
               id="retirementAge"
@@ -225,7 +225,7 @@ export function CreateClientDialog({ open: controlledOpen, onOpenChange: control
             onClick={() => setOpen(false)}
             className="border-slate-200 text-slate-700"
           >
-            Cancel
+            Avbryt
           </Button>
           <Button
             type="submit"
@@ -233,7 +233,7 @@ export function CreateClientDialog({ open: controlledOpen, onOpenChange: control
             disabled={createClient.isPending || !form.name || !form.date_of_birth || !form.employment_status || !form.collective_agreement}
           >
             {createClient.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Create Client
+            Skapa klient
           </Button>
         </DialogFooter>
       </form>
@@ -253,7 +253,7 @@ export function CreateClientDialog({ open: controlledOpen, onOpenChange: control
       <DialogTrigger asChild>
         <Button className="gap-2 bg-sky-500 text-white hover:bg-sky-600">
           <Plus className="h-4 w-4" />
-          New Client
+          Ny klient
         </Button>
       </DialogTrigger>
       {dialogContent}

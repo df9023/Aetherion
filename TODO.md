@@ -89,24 +89,42 @@
 - [x] Removed unused prompt files
 - [x] Updated CLAUDE.md, README.md, SETUP.md, TODO.md
 
+### Knowledge Base — Document Ingestion
+- [x] Document index created (`backend/data/knowledge/document-index.json`) with 24 Swedish pension documents
+- [x] 24 `.meta.json` sidecar files generated for all documents
+- [x] 9 of 11 direct PDFs downloaded into `backend/data/knowledge/`
+- [x] Seed script auto-ingests PDFs with `.meta.json` sidecars (144 chunks from 9 documents)
+- [x] RAG tested end-to-end: recommendation generation with native citations works
+
+### Visual Redesign
+- [x] v0 prototype generated (reference in `v0-reference/`)
+- [x] v0 visual design applied to existing frontend (data layer intact)
+
+### Bug Fixes
+- [x] Fixed suitability score display (was showing "0.85 / 10 Low suitability" — now shows "85% High suitability")
+- [x] Fixed document generation crash (LLM returns cost as string, DOCX formatter expected float)
+- [x] Fixed database enum mismatch for `meeting_brief_generated`, `document_ingested`, `client_data_applied` audit actions
+
 ---
 
 ## In Progress
 
-### Knowledge Base — Document Ingestion
-- [ ] Download direct PDFs into `backend/data/knowledge/` (11 files with direct URLs — see `document-index.json`)
+### Knowledge Base — Remaining Documents
+- [ ] Download remaining 2 PDFs manually (PTK ITP2 guide, IDD directive from EUR-Lex)
 - [ ] Save-as-PDF from browser for remaining 13 web pages (Pensionsmyndigheten, Skatteverket, minPension, etc.)
-- [ ] Run Claude Code prompt `prompts/claude-code-seed-knowledge-docs.md` to wire seed script for auto-ingestion
-- [ ] Run `python -m scripts.seed` and verify knowledge items appear in frontend
-- [ ] Test RAG: generate a recommendation and confirm evidence cites real documents with native citations
+- [ ] Add InsureSec rules/guidelines and Lagen om försäkringsdistribution (2018:1219)
+- [ ] Switch from hash-based embeddings to Voyage AI or OpenAI for real semantic search quality
+
+### Git Cleanup
+- [ ] Revoke leaked GitHub PAT (in `.cursor/mcp.json` git history)
+- [ ] Remove `.cursor/mcp.json` from git tracking
+- [ ] Delete stale `cursorrules` file (superseded by `CLAUDE.md`)
+- [ ] Clean up or move `Aetherion.md` to `docs/`
+- [ ] Remove `prompts/*.md` build prompts from tracking
 
 ---
 
 ## Next Up
-
-### Visual Redesign
-- [ ] v0 prototype generated (reference in `v0-reference/`)
-- [ ] Apply v0 visual design to existing frontend (keep data layer intact)
 
 ### Compliance Documentation Polish
 - [ ] Review behovsanalys section against FI expectations
@@ -128,6 +146,18 @@
 
 ## Post-Demo — Build After SPP Validation
 
+### Product Catalog & Firm Offerings
+> Different advisory firms (SPP, Max Matthiessen, Söderberg & Partners, etc.) have different distribution agreements, product shelves, and fee structures. Recommendations must be scoped to what the firm can actually offer — not generic advice.
+
+- [ ] Domain model: `ProductOffering` entity (org-scoped) — provider, product name, category (traditional/unit-linked/hybrid), fee tiers, fund selection, transfer rules
+- [ ] Domain model: `ProviderAgreement` entity — which insurance providers (Alecta, AMF, Folksam, Skandia, etc.) the org has distribution agreements with
+- [ ] Seed data: SPP's actual product shelf as example
+- [ ] Recommendation prompt receives org's available products as context — Claude recommends *from what the firm can sell*
+- [ ] Cost disclosure (IDD section 7) uses the firm's actual fee schedule instead of generic estimates
+- [ ] Conflict of interest disclosure (IDD section 8) reflects the firm's commission structure
+- [ ] Frontend: org settings page for managing product catalog
+- [ ] Frontend: recommendation shows which specific products were considered and why
+
 ### Scenario Modeling
 - [ ] Scenario comparison mode: 2-3 parameter variations, side-by-side outcomes
 - [ ] Frontend: interactive scenario builder with comparison cards
@@ -139,6 +169,22 @@
 ### Async Tasks
 - [ ] Celery + Redis for background jobs
 - [ ] Async document/recommendation generation
+
+### Login & Onboarding
+- [ ] Login page — polished, brand-forward landing page (WorkOS-powered auth)
+- [ ] First-time setup flow for new organizations
+
+### Organization Settings Page
+- [ ] Sidebar: "Inställningar" page for the advisory firm
+- [ ] Firm profile: name, org number, logo
+- [ ] User management: invite/remove advisors, assign roles
+- [ ] Product catalog configuration (ties into Product Catalog feature above)
+- [ ] Branding/preferences
+
+### Additional Sidebar Pages
+- [ ] Dashboard / overview page (key metrics, recent activity, upcoming meetings)
+- [ ] Reports page (compliance summaries, case throughput, advisor performance)
+- [ ] Calendar / meeting schedule view
 
 ### Production Readiness
 - [ ] CI/CD via GitHub Actions (lint, test, build)

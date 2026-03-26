@@ -407,7 +407,10 @@ class DocumentService:
         add_section(6, "Lämplighetsbedömning")
         score = rec.get("suitability_score")
         if score is not None:
-            score_pct = f"{score * 100:.0f}%"
+            try:
+                score_pct = f"{float(score) * 100:.0f}%"
+            except (ValueError, TypeError):
+                score_pct = str(score)
             doc.add_paragraph(f"Lämplighetspoäng: {score_pct}")
         assessment = "Denna rekommendation har bedömts mot klientens riskprofil"
         if client.get("risk_profile"):
@@ -450,11 +453,17 @@ class DocumentService:
                     ci = 1
                     if has_fee:
                         fee = s.get("projected_outcome", {}).get("annual_fee")
-                        row.cells[ci].text = f"{fee}%" if fee is not None else "—"
+                        try:
+                            row.cells[ci].text = f"{float(fee)}%" if fee is not None else "—"
+                        except (ValueError, TypeError):
+                            row.cells[ci].text = str(fee) if fee is not None else "—"
                         ci += 1
                     if has_cost:
                         cost = s.get("projected_outcome", {}).get("total_cost")
-                        row.cells[ci].text = f"{cost:,.0f} SEK" if cost is not None else "—"
+                        try:
+                            row.cells[ci].text = f"{float(cost):,.0f} SEK" if cost is not None else "—"
+                        except (ValueError, TypeError):
+                            row.cells[ci].text = str(cost) if cost is not None else "—"
 
         # --- 8. Intressekonflikter ---
         add_section(8, "Intressekonflikter")
