@@ -69,18 +69,44 @@
 - [x] React Query hooks wired to all backend endpoints
 - [x] Dev auth bypass (X-Dev-User-Id / X-Dev-Org-Id headers)
 
+### Auth & Security
+- [x] WorkOS integration (login, callback, logout, /me)
+- [x] Rate limiting on LLM and auth endpoints (slowapi)
+- [x] Security headers middleware
+- [x] Startup validation for production secrets
+- [x] Request logging middleware (non-PII)
+
+### Native Citations (Two-Pass Architecture)
+- [x] Refactored recommendation generation to two-pass: tool_use (structure) + Citations API (evidence)
+- [x] Knowledge items sent as document blocks with `citations: {"enabled": true}`
+- [x] Native citation parsing with document_index → knowledge_item_id mapping
+- [x] Evidence model updated: cited_text, document_index, start/end_char_index, knowledge_item_id FK
+- [x] Removed fuzzy CitationValidator — native citations are verified by definition
+- [x] Frontend evidence cards show cited_text blockquotes
+- [x] Migration 004_native_citations.py
+
+### Codebase Cleanup
+- [x] Removed unused prompt files
+- [x] Updated CLAUDE.md, README.md, SETUP.md, TODO.md
+
 ---
 
 ## In Progress
 
-### Visual Redesign
-- [ ] v0 prototype generated (reference in `v0-reference/`)
-- [ ] Claude Code prompt ready (`prompts/claude-code-visual-redesign.md`)
-- [ ] Apply v0 visual design to existing frontend (keep data layer intact)
+### Knowledge Base — Document Ingestion
+- [ ] Download direct PDFs into `backend/data/knowledge/` (11 files with direct URLs — see `document-index.json`)
+- [ ] Save-as-PDF from browser for remaining 13 web pages (Pensionsmyndigheten, Skatteverket, minPension, etc.)
+- [ ] Run Claude Code prompt `prompts/claude-code-seed-knowledge-docs.md` to wire seed script for auto-ingestion
+- [ ] Run `python -m scripts.seed` and verify knowledge items appear in frontend
+- [ ] Test RAG: generate a recommendation and confirm evidence cites real documents with native citations
 
 ---
 
 ## Next Up
+
+### Visual Redesign
+- [ ] v0 prototype generated (reference in `v0-reference/`)
+- [ ] Apply v0 visual design to existing frontend (keep data layer intact)
 
 ### Compliance Documentation Polish
 - [ ] Review behovsanalys section against FI expectations
@@ -93,11 +119,10 @@
 - [ ] `POST /api/v1/knowledge/ask` — question in, grounded answer + sources out
 - [ ] Frontend: Q&A chat interface in knowledge panel (augment existing search)
 
-### Auth & Security
-- [ ] WorkOS integration (SSO, SAML, directory sync)
-- [ ] Replace dev JWT stub with real auth flow
+### Auth & Security (remaining)
+- [ ] Replace dev JWT stub with real WorkOS auth flow in frontend
 - [ ] Role-based access control on all endpoints
-- [ ] Rate limiting on LLM endpoints
+- [ ] Directory sync (WorkOS)
 
 ---
 
