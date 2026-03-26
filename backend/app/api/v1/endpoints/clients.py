@@ -1,7 +1,7 @@
 import logging
 from uuid import UUID
 
-from fastapi import APIRouter, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, File, HTTPException, Request, UploadFile, status
 from pydantic import BaseModel
 from sqlalchemy import select
 
@@ -9,6 +9,7 @@ from app.api.deps import CurrentUser, DbSession, OrganizationId
 from app.config import get_settings
 from app.models.client import Client
 from app.schemas.client import ClientCreate, ClientUpdate, ClientResponse
+from app.rate_limit import limiter
 from app.services.reasoner import ReasonerService
 
 logger = logging.getLogger(__name__)
@@ -99,7 +100,9 @@ async def update_client(
 
 
 @router.post("/{client_id}/ingest-document")
+@limiter.limit("10/minute")
 async def ingest_document(
+    request: Request,
     client_id: UUID,
     db: DbSession,
     current_user: CurrentUser,

@@ -1,6 +1,7 @@
-# Environment files (contain secrets)
+# Environment files and secrets
 .env
 .env.local
+.cursor/mcp.json
 .env.development
 .env.staging
 .env.production
@@ -61,3 +62,7 @@ service-account*.json
 
 # Generated documents
 generated_documents/
+
+# Knowledge base source documents (PDFs/TXTs are real docs, not tracked)
+backend/data/knowledge/*.pdf
+backend/data/knowledge/*.txt

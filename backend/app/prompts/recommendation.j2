@@ -8,21 +8,19 @@ Generera en strukturerad pensionsrekommendation baserat på klientens situation 
 
 ## Hämtade kunskapsartiklar
 
-Använd dessa som evidens i din rekommendation. Citera dem med deras ID i reasoning_chain.evidence_ids.
+Dessa artiklar ger dig bakgrund. Du behöver INTE citera dem här — evidens och citeringar hanteras i ett separat steg.
 {% if knowledge_items %}
 {% for item in knowledge_items %}
-### [{{ item.id }}] {{ item.title }}
+### {{ item.title }}
 **Kategori:** {{ item.category }}
 **Källa:** {{ item.source }}
-{% if item.tags %}**Taggar:** {{ item.tags | join(', ') }}{% endif %}
-{% if item.effective_date %}**Gäller från:** {{ item.effective_date }}{% endif %}
 
 {{ item.content }}
 
 ---
 {% endfor %}
 {% else %}
-*Inga kunskapsartiklar hämtade. Basera rekommendationen på din expertkunskap och flagga avsaknaden av stödjande evidens.*
+*Inga kunskapsartiklar hämtade. Basera rekommendationen på din expertkunskap.*
 {% endif %}
 
 ## Instruktioner
@@ -53,3 +51,4 @@ Analysera klientens situation steg för steg och producera en komplett rekommend
 - Om inga finns, dokumentera det som ett antagande
 
 Producera din rekommendation genom att använda tool_use-verktyget `generate_recommendation`.
+Inkludera INTE evidens eller resonemangssteg — dessa genereras separat med citering.

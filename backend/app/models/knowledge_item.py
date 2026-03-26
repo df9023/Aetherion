@@ -3,7 +3,7 @@ from datetime import datetime, date, timezone
 from typing import TYPE_CHECKING, Optional
 
 from sqlalchemy import String, Text, Boolean, Date, DateTime, ForeignKey
-from sqlalchemy.dialects.postgresql import UUID, ARRAY
+from sqlalchemy.dialects.postgresql import UUID, ARRAY, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from pgvector.sqlalchemy import Vector
 
@@ -30,7 +30,7 @@ class KnowledgeItem(Base):
     )
     source: Mapped[str] = mapped_column(String(512), nullable=False)
     tags: Mapped[list[str]] = mapped_column(ARRAY(String), nullable=False, default=list)
-    embedding = mapped_column(Vector(1536), nullable=True)
+    embedding = mapped_column(Vector(), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     effective_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     expiry_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
@@ -49,6 +49,9 @@ class KnowledgeItem(Base):
     approved_by: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id"), nullable=True
     )
+    source_location: Mapped[Optional[dict]] = mapped_column(
+        JSONB, nullable=True
+    )  # {"start_char": int, "end_char": int, "page_number": int | None}
 
     # Relationships
     organization: Mapped["Organization"] = relationship(

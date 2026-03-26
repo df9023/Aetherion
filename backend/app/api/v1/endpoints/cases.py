@@ -1,7 +1,7 @@
 import logging
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Request, status
 from sqlalchemy import select
 
 from app.api.deps import CurrentUser, DbSession, OrganizationId
@@ -19,6 +19,7 @@ from app.models.recommendation import Recommendation
 from app.schemas.case import CaseCreate, CaseUpdate, CaseResponse
 from app.schemas.audit_entry import AuditEntryResponse
 from app.schemas.recommendation import GenerateRecommendationRequest, RecommendationResponse
+from app.rate_limit import limiter
 from app.services.memory import MemoryService
 from app.services.reasoner import ReasonerService
 
@@ -174,7 +175,9 @@ _CASE_TYPE_TO_RECOMMENDATION: dict[CaseType, RecommendationType] = {
     response_model=RecommendationResponse,
     status_code=status.HTTP_201_CREATED,
 )
+@limiter.limit("10/minute")
 async def generate_recommendation(
+    request: Request,
     case_id: UUID,
     body: GenerateRecommendationRequest,
     db: DbSession,
@@ -280,7 +283,9 @@ async def generate_recommendation(
 
 
 @router.post("/{case_id}/generate-brief")
+@limiter.limit("10/minute")
 async def generate_meeting_brief(
+    request: Request,
     case_id: UUID,
     body: GenerateRecommendationRequest,
     db: DbSession,
