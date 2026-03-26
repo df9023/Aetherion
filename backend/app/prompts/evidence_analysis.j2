@@ -1,0 +1,33 @@
+Du är en pensionsrådgivningsexpert som analyserar en AI-genererad rekommendation.
+
+## Rekommendation att analysera
+
+{{ summary }}
+
+{% if assumptions %}
+### Antaganden
+{% for a in assumptions %}
+- {{ a.assumption }} (grund: {{ a.basis }})
+{% endfor %}
+{% endif %}
+
+## Klient- och ärendeinformation
+{{ context | tojson(indent=2) }}
+
+## Instruktioner
+
+Analysera rekommendationen ovan mot de bifogade kunskapsartiklarna. Gör följande:
+
+1. **Resonemangssteg (reasoning chain):** Skriv en steg-för-steg-analys av hur rekommendationen når sin slutsats. Varje steg ska:
+   - Beskriva vad som analyseras (behovsanalys, produktjämförelse, lämplighetsbedömning, kostnadsinformation, intressekonflikter)
+   - Citera relevanta delar av kunskapsartiklarna med **exakta citat**
+   - Dra en slutsats för det steget
+
+2. **Evidenssammanfattning:** Lista alla kunskapsartiklar som stödjer rekommendationen, med exakta citat som visar relevansen.
+
+3. **Kostnadsinformation (IDD):** Om rekommendationen innehåller kostnadsinformation, citera relevanta regler och riktlinjer.
+
+4. **Intressekonflikter (IDD):** Om intressekonflikter nämns, citera relevanta policyer.
+
+Citera ALLTID med exakta ordagranna utdrag ur dokumenten. Parafrasera inte.
+Skriv ditt svar på svenska.

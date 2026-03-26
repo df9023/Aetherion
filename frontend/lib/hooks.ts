@@ -73,6 +73,11 @@ export interface EvidenceResponse {
   confidence: string
   verified: boolean
   verification_status: "verified" | "partially_verified" | "unverified"
+  cited_text: string | null
+  document_index: number | null
+  start_char_index: number | null
+  end_char_index: number | null
+  knowledge_item_id: string | null
   created_at: string
 }
 

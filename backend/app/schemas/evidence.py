@@ -26,4 +26,12 @@ class EvidenceResponse(EvidenceBase):
     recommendation_id: UUID
     verified: bool = True
     verification_status: str = "verified"
+
+    # Native citation fields
+    cited_text: str | None = None
+    document_index: int | None = None
+    start_char_index: int | None = None
+    end_char_index: int | None = None
+    knowledge_item_id: UUID | None = None
+
     created_at: datetime

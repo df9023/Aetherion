@@ -1,9 +1,9 @@
 import uuid
-from datetime import datetime
-from typing import TYPE_CHECKING
+from datetime import datetime, timezone
+from typing import TYPE_CHECKING, Optional
 from decimal import Decimal
 
-from sqlalchemy import Boolean, String, Text, DateTime, ForeignKey, Numeric
+from sqlalchemy import Boolean, Integer, String, Text, DateTime, ForeignKey, Numeric
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -12,6 +12,7 @@ from app.models.base import EvidenceSourceType, ValueEnum
 
 if TYPE_CHECKING:
     from app.models.recommendation import Recommendation
+    from app.models.knowledge_item import KnowledgeItem
 
 
 class Evidence(Base):
@@ -34,11 +35,25 @@ class Evidence(Base):
     verification_status: Mapped[str] = mapped_column(
         String(30), nullable=False, default="verified"
     )
+
+    # Native citation fields (from Claude Citations API)
+    cited_text: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    document_index: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    start_char_index: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    end_char_index: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    knowledge_item_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("knowledge_items.id"), nullable=True
+    )
+
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, default=datetime.utcnow
+        DateTime(timezone=True), nullable=False,
+        default=lambda: datetime.now(timezone.utc),
     )
 
     # Relationships
     recommendation: Mapped["Recommendation"] = relationship(
         "Recommendation", back_populates="evidences"
+    )
+    knowledge_item: Mapped[Optional["KnowledgeItem"]] = relationship(
+        "KnowledgeItem", lazy="selectin",
     )

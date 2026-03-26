@@ -1,0 +1,242 @@
+[
+  {
+    "filename": "fffs-2018-10-forsakringsdistribution.pdf",
+    "title": "FFFS 2018:10 — Finansinspektionens föreskrifter om försäkringsdistribution",
+    "category": "regulatory_requirement",
+    "source": "Finansinspektionen",
+    "tags": ["IDD", "compliance", "försäkringsdistribution", "behovsanalys", "lämplighetsbedömning"],
+    "url": "https://www.fi.se/contentassets/2e8d4b4ff7124faca86cc1c2f1988c7d/fs1810.pdf",
+    "notes": "Direct PDF download from FI. This is THE core regulation for pension advisory in Sweden — implements IDD. Covers suitability assessment, needs analysis, documentation, knowledge requirements, and remuneration rules. PRIORITY: #1 — advisors reference this weekly.",
+    "url_verified": true
+  },
+  {
+    "filename": "fffs-2017-2-vardepappersrorelse.pdf",
+    "title": "FFFS 2017:2 — Finansinspektionens föreskrifter om värdepappersrörelse",
+    "category": "regulatory_requirement",
+    "source": "Finansinspektionen",
+    "tags": ["MiFID II", "investeringsrådgivning", "värdepappersrörelse", "compliance"],
+    "url": "https://lagen.nu/fffs/2017:2",
+    "notes": "Replaced FFFS 2007:16 on 2018-01-03. Full text available on lagen.nu (save as PDF from browser). Chapter 16 covers investment advice to consumers. Referenced alongside IDD for fund/investment advice within pension context. Also available on finreg.se/fffs/2017-2/",
+    "url_verified": true
+  },
+  {
+    "filename": "idd-directive-2016-97.pdf",
+    "title": "Directive (EU) 2016/97 — Insurance Distribution Directive (IDD)",
+    "category": "regulatory_requirement",
+    "source": "European Parliament / Council of the EU",
+    "tags": ["IDD", "EU-directive", "försäkringsdistribution", "consumer-protection"],
+    "url": "https://eur-lex.europa.eu/legal-content/en/TXT/?uri=CELEX:32016L0097",
+    "notes": "The EU-level directive. Available in all EU languages including Swedish — change language selector on EUR-Lex. Save as PDF from browser. Also available as PDF: https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:32016L0097",
+    "url_verified": true
+  },
+  {
+    "filename": "fi-general-good-rules-idd.pdf",
+    "title": "General Good Rules according to the Insurance Distribution Directive (IDD) — Sweden",
+    "category": "regulatory_requirement",
+    "source": "Finansinspektionen",
+    "tags": ["IDD", "compliance", "general-good-rules", "cross-border"],
+    "url": "https://www.fi.se/contentassets/af684441833140f5a48557da01c51e5c/general-good-rules-idd-k.pdf",
+    "notes": "Direct PDF from FI. Summary of Swedish IDD implementation rules — useful as a quick-reference companion to FFFS 2018:10. English language.",
+    "url_verified": true
+  },
+  {
+    "filename": "itp-avtal-och-tgl-2026.pdf",
+    "title": "Avtal om ITP och TGL — Gäller från och med 2026-01-01",
+    "category": "product_rule",
+    "source": "PTK / Svenskt Näringsliv",
+    "tags": ["ITP1", "ITP2", "TGL", "kollektivavtal", "planbestämmelser"],
+    "url": "https://www.ptk.se/wp-content/uploads/2025/12/Avtal_ITP_och_TGL_2026.pdf",
+    "notes": "Direct PDF from PTK. The FULL ITP agreement text including both ITP1 (premiebestämd) and ITP2 (förmånsbestämd) plan rules plus TGL. Updated to 2026. PRIORITY: #2 — this is the foundational document for any ITP advisor.",
+    "url_verified": true
+  },
+  {
+    "filename": "ptk-guide-itp2.pdf",
+    "title": "ITP 2 — Till dig som har tjänstepensionen ITP 2",
+    "category": "playbook",
+    "source": "PTK",
+    "tags": ["ITP2", "förmånsbestämd", "pension", "guide"],
+    "url": "https://www.ptk.se/wp-content/uploads/2021/04/PTK-2020-skrift-ITP-2.pdf",
+    "notes": "Direct PDF from PTK. Plain-language guide to ITP2 — useful for explaining the DB formula, ITPK, family pension to clients. Slightly older (2020) but ITP2 rules are stable.",
+    "url_verified": true
+  },
+  {
+    "filename": "ptk-guide-byte-av-pensionsplan.pdf",
+    "title": "Byte av pensionsplan — Att hantera pensions- och försäkringsvillkor",
+    "category": "process_guide",
+    "source": "PTK",
+    "tags": ["pensionsplan", "flytt", "villkor", "byte"],
+    "url": "https://www.ptk.se/wp-content/uploads/2025/11/PTK-2025-guide-byte-av-pensionsplan-uppdaterad-2025-11-07.pdf",
+    "notes": "Direct PDF from PTK. Guide for handling pension plan switches — relevant for flyttrådgivning workflows.",
+    "url_verified": true
+  },
+  {
+    "filename": "bestammelser-avtalspension-saf-lo-2024.pdf",
+    "title": "Bestämmelser för Avtalspension SAF-LO 2024",
+    "category": "product_rule",
+    "source": "Fora",
+    "tags": ["SAF-LO", "avtalspension", "blue-collar", "bestämmelser"],
+    "url": "https://www.fora.se/kundservice/forsakringsvillkor/bestammelser-for-avtalspension-saf-lo-2024/",
+    "notes": "Available on Fora's website — may need to download the PDF from the page. Full plan rules for SAF-LO blue-collar occupational pension. Also see the AFA document at: https://www.afaforsakring.se/dokument/qsilf5fle3vrdcae8fdb/f0265-saf-lo-2021.pdf",
+    "url_verified": true
+  },
+  {
+    "filename": "amf-villkor-avtalspension-saf-lo.pdf",
+    "title": "Försäkringsvillkor — Avtalspension SAF-LO och Livsarbetstidspension",
+    "category": "product_rule",
+    "source": "AMF",
+    "tags": ["AMF", "SAF-LO", "försäkringsvillkor", "default-val"],
+    "url": "https://www.amf.se/globalassets/pdf/villkor/584.027.pdf",
+    "notes": "Direct PDF from AMF. Insurance terms for AMF's SAF-LO products. AMF is the default provider for SAF-LO — this is what you get if you don't make an active choice.",
+    "url_verified": true
+  },
+  {
+    "filename": "akap-kr-pensionsavtal.pdf",
+    "title": "AKAP-KR — Överenskommelse om Avgiftsbestämd KollektivAvtalad Pension",
+    "category": "product_rule",
+    "source": "SKR / Sobona / OFR / AkademikerAlliansen",
+    "tags": ["AKAP-KR", "kommun", "region", "offentlig-sektor", "DC"],
+    "url": "https://www.saco.se/globalassets/lokala-akademikerforeningar/kommun-och-region/akademikeralliansen/dokument/avtal-stadgar-pension/akap-kr.pdf",
+    "notes": "Direct PDF from SACO. Full AKAP-KR agreement text (replaced AKAP-KL from 2023-01-01). The DC pension plan for municipal/regional employees. 6% up to 7.5 IBB, 31.5% above.",
+    "url_verified": true
+  },
+  {
+    "filename": "alecta-forsakringsvillkor-formansbestamd-itp2.pdf",
+    "title": "Försäkringsvillkor — Förmånsbestämd ITP 2",
+    "category": "product_rule",
+    "source": "Alecta",
+    "tags": ["Alecta", "ITP2", "förmånsbestämd", "försäkringsvillkor"],
+    "url": "https://www.alecta.se/globalassets/dokument/forsakringsvillkor/2167-forsakringsvillkor_formbestamd-itp-2.pdf",
+    "notes": "Direct PDF from Alecta. Insurance terms for the DB portion of ITP2. Alecta is the sole administrator of ITP2 DB — every ITP2 advisor needs this. PRIORITY: #3.",
+    "url_verified": true
+  },
+  {
+    "filename": "amf-villkor-fondforsakring.pdf",
+    "title": "Försäkringsvillkor — AMF Fondförsäkring",
+    "category": "product_rule",
+    "source": "AMF",
+    "tags": ["AMF", "fondförsäkring", "villkor", "default"],
+    "url": "https://www.amf.se/globalassets/pdf/villkor/584.013.pdf",
+    "notes": "Direct PDF from AMF. Terms for AMF's unit-linked pension insurance. AMF is default for SAF-LO and a common ITP choice.",
+    "url_verified": true
+  },
+  {
+    "filename": "amf-villkor-amf-aktiv.pdf",
+    "title": "Försäkringsvillkor — AMF Aktiv",
+    "category": "product_rule",
+    "source": "AMF",
+    "tags": ["AMF", "fondförsäkring", "aktiv", "villkor"],
+    "url": "https://www.amf.se/globalassets/pdf/villkor/583.678.pdf",
+    "notes": "Direct PDF from AMF. Terms for AMF Aktiv product.",
+    "url_verified": true
+  },
+  {
+    "filename": "amf-villkor-fondforsakring-kap-kl.pdf",
+    "title": "Försäkringsvillkor för fondförsäkring KAP-KL",
+    "category": "product_rule",
+    "source": "AMF",
+    "tags": ["AMF", "KAP-KL", "fondförsäkring", "kommun"],
+    "url": "https://www.amf.se/globalassets/pdf/villkor/583.660.pdf",
+    "notes": "Direct PDF from AMF. Terms for AMF's KAP-KL fund insurance product — relevant for municipal sector clients.",
+    "url_verified": true
+  },
+  {
+    "filename": "spp-forsakringsvillkor-tjanstepension.pdf",
+    "title": "SPP Försäkringsvillkor — Tjänstepensionsplan",
+    "category": "product_rule",
+    "source": "SPP (Storebrand)",
+    "tags": ["SPP", "tjänstepension", "försäkringsvillkor", "fondförsäkring"],
+    "url": "https://www.spp.se/dokument/",
+    "notes": "SPP's document portal — contains insurance terms (SPP1327), pre-purchase info, and product sheets. You'll need to navigate and download specific PDFs from the page. Also see direct link to older terms: https://www.frilansfinans.se/wp-content/uploads/2020/11/SPP-VILLKOR.pdf",
+    "url_verified": true
+  },
+  {
+    "filename": "collectum-fondutbud-itp.pdf",
+    "title": "Collectum ITP fondutbud — Jämför valbara pensionsbolag",
+    "category": "product_rule",
+    "source": "Collectum / Avtalat",
+    "tags": ["Collectum", "fondlista", "ITP", "avgifter", "val"],
+    "url": "https://www.avtalat.se/tjansteman/itp-val/jamfor-valbara-pensionsbolag/",
+    "notes": "Interactive comparison on Avtalat.se (Collectum's consumer-facing platform). Save as PDF. Shows all 10 selectable providers (5 traditional, 5 fund-based) with 119 funds. Collectum's fee: 0.55% of premium, max 450 SEK/year. PRIORITY: #4.",
+    "url_verified": true
+  },
+  {
+    "filename": "pensionsmyndigheten-sa-fungerar-pensionen.pdf",
+    "title": "Så fungerar pensionssystemet — Pensionsmyndigheten",
+    "category": "playbook",
+    "source": "Pensionsmyndigheten",
+    "tags": ["tre-pelare", "allmän-pension", "premiepension", "inkomstpension", "overview"],
+    "url": "https://www.pensionsmyndigheten.se/forsta-din-pension/om-pensionssystemet/mer-om-pensionssystemet",
+    "notes": "Save as PDF from browser. Official overview of the three-pillar system. Also see the annual statistical publication 'Pensionssystemet i bilder och siffror': https://www.pensionsmyndigheten.se/statistik/publikationer/Pensionssystemet-i-bilder-och-siffror-2023/",
+    "url_verified": true
+  },
+  {
+    "filename": "pensionsmyndigheten-orange-kuvert.pdf",
+    "title": "Orange kuvert — Så läser du ditt årsbesked för allmän pension",
+    "category": "playbook",
+    "source": "Pensionsmyndigheten",
+    "tags": ["orange-kuvert", "årsbesked", "allmän-pension", "guide"],
+    "url": "https://www.pensionsmyndigheten.se/forsta-din-pension/sa-fungerar-pensionen/sa-laser-du-orange-kuvert",
+    "notes": "Save as PDF from browser. Step-by-step guide to reading the orange envelope. Every advisor explains this to clients. Also FAQ page: https://www.pensionsmyndigheten.se/vanliga-fragor-och-svar-om-pension/vanliga-fragor/fragor-och-svar-om-orange-kuvert",
+    "url_verified": true
+  },
+  {
+    "filename": "skatteverket-pension-beskattning.pdf",
+    "title": "Så beskattas din pension — Skatteverket",
+    "category": "regulatory_requirement",
+    "source": "Skatteverket",
+    "tags": ["skatt", "pension", "beskattning", "utbetalning"],
+    "url": "https://www.skatteverket.se/privat/skatter/arbeteochinkomst/sabeskattasdinpension.4.7da1d2e118be03f8e4f8eaa.html",
+    "notes": "Save as PDF from browser. Official tax rules for pension taxation — needed for decumulation planning and salary exchange analysis.",
+    "url_verified": true
+  },
+  {
+    "filename": "lonevaxling-guide-minpension.pdf",
+    "title": "Allt du behöver veta om löneväxling — minPension",
+    "category": "playbook",
+    "source": "minPension",
+    "tags": ["löneväxling", "salary-exchange", "skatt", "beräkning"],
+    "url": "https://www.minpension.se/allt-om-pensioner/tjanstepension/allt-du-behover-veta-om-lonevaxling",
+    "notes": "Save as PDF from browser. Comprehensive guide covering when salary exchange is beneficial (above 7.5 IBB / ~56,087 SEK/month in 2026), tax implications, and impact on other benefits.",
+    "url_verified": true
+  },
+  {
+    "filename": "lonevaxling-guide-sverigesingenjorer.pdf",
+    "title": "Att tänka på vid löneväxling — Sveriges Ingenjörer",
+    "category": "playbook",
+    "source": "Sveriges Ingenjörer",
+    "tags": ["löneväxling", "salary-exchange", "checklista"],
+    "url": "https://www.sverigesingenjorer.se/pension/lonevaxling/",
+    "notes": "Save as PDF from browser. Practical checklist for salary exchange — good complement to the minPension guide.",
+    "url_verified": true
+  },
+  {
+    "filename": "efterlevandeskydd-guide-ptk.pdf",
+    "title": "Efterlevandeskydd och livförsäkring — PTK",
+    "category": "playbook",
+    "source": "PTK",
+    "tags": ["efterlevandeskydd", "familjeskydd", "livförsäkring", "ITP"],
+    "url": "https://www.ptk.se/sakfragor/pension-och-forsakring/tjanstepension-itp/efterlevandeskydd-och-livforsakring/",
+    "notes": "Save as PDF from browser. Overview of survivor protection within ITP — familjeskydd (1-4 prisbasbelopp, 5-20 years), återbetalningsskydd, and TGL life insurance.",
+    "url_verified": true
+  },
+  {
+    "filename": "efterlevandeskydd-pensionsmyndigheten.pdf",
+    "title": "Efterlevandeskydd — Vad händer med pensionen när du dör?",
+    "category": "playbook",
+    "source": "Pensionsmyndigheten",
+    "tags": ["efterlevandeskydd", "allmän-pension", "barnpension", "omställningspension"],
+    "url": "https://www.pensionsmyndigheten.se/forsta-din-pension/om-pensionssystemet/vad-hander-med-pensionen-nar-du-dor",
+    "notes": "Save as PDF from browser. Covers the state pension side of survivor protection — complements the PTK guide on occupational pension side.",
+    "url_verified": true
+  },
+  {
+    "filename": "skandia-guide-efterlevandeskydd.pdf",
+    "title": "Guide efterlevandeskydd — Skandia",
+    "category": "playbook",
+    "source": "Skandia",
+    "tags": ["efterlevandeskydd", "återbetalningsskydd", "jämförelse", "guide"],
+    "url": "https://www.skandia.se/spara-pension/pension/pensionsval/efterlevandeskydd/",
+    "notes": "Save as PDF from browser. Comparison-oriented guide from a major provider — useful for explaining trade-offs between återbetalningsskydd and familjeskydd to clients.",
+    "url_verified": true
+  }
+]

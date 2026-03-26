@@ -81,7 +81,9 @@ const verificationConfig = {
 
 function EvidenceCard({ evidence: e }: { evidence: EvidenceResponse }) {
   const [showTooltip, setShowTooltip] = useState(false)
-  const hasKnowledgeLink = isUuid(e.source_reference)
+  const knowledgeId = e.knowledge_item_id || (isUuid(e.source_reference) ? e.source_reference : null)
+  const hasKnowledgeLink = !!knowledgeId
+  const isNativeCitation = !!e.cited_text
   const status = e.verification_status ?? "verified"
   const vConfig = verificationConfig[status] ?? verificationConfig.verified
   const VerifyIcon = vConfig.icon
@@ -111,7 +113,20 @@ function EvidenceCard({ evidence: e }: { evidence: EvidenceResponse }) {
           </span>
         </div>
       </div>
-      <p className="mt-1 text-xs text-slate-500">{e.content_snippet}</p>
+
+      {/* Native citation: show cited_text as blockquote */}
+      {isNativeCitation ? (
+        <blockquote className="mt-2 border-l-2 border-emerald-300 pl-2.5 text-xs italic text-slate-600">
+          {e.cited_text}
+        </blockquote>
+      ) : (
+        <p className="mt-1 text-xs text-slate-500">{e.content_snippet}</p>
+      )}
+
+      {/* Relevance explanation for native citations */}
+      {isNativeCitation && e.relevance_explanation && (
+        <p className="mt-1 text-[11px] text-slate-400">{e.relevance_explanation.slice(0, 200)}</p>
+      )}
 
       {/* Tooltip */}
       {showTooltip && hasKnowledgeLink && (
@@ -120,7 +135,7 @@ function EvidenceCard({ evidence: e }: { evidence: EvidenceResponse }) {
             View in Knowledge Base
           </p>
           <p className="text-[10px] text-sky-600">
-            {e.content_snippet.slice(0, 120)}...
+            {(e.cited_text || e.content_snippet).slice(0, 120)}...
           </p>
         </div>
       )}
@@ -129,7 +144,7 @@ function EvidenceCard({ evidence: e }: { evidence: EvidenceResponse }) {
 
   if (hasKnowledgeLink) {
     return (
-      <Link href={`/knowledge?highlight=${e.source_reference}`}>
+      <Link href={`/knowledge?highlight=${knowledgeId}`}>
         {card}
       </Link>
     )
@@ -257,12 +272,10 @@ export function AIRecommendationCard({
                       {step.conclusion && (
                         <p className="mt-0.5 text-xs text-slate-400">{step.conclusion}</p>
                       )}
-                      {step.evidence_ids?.length > 0 && evidence && (
+                      {step.evidence_ids?.length > 0 && (
                         <div className="mt-1 flex flex-wrap gap-1">
                           {step.evidence_ids.map((eid) => {
-                            const ev = evidence.find((e) => e.id === eid)
-                            if (!ev) return null
-                            const linked = isUuid(ev.source_reference)
+                            const linked = isUuid(eid)
                             const badge = (
                               <span
                                 key={eid}
@@ -272,13 +285,12 @@ export function AIRecommendationCard({
                                     ? "bg-sky-50 text-sky-600 hover:bg-sky-100 cursor-pointer"
                                     : "bg-slate-100 text-slate-500",
                                 )}
-                                title={ev.content_snippet}
                               >
-                                {ev.source_reference}
+                                {eid.slice(0, 8)}...
                               </span>
                             )
                             return linked ? (
-                              <Link key={eid} href={`/knowledge?highlight=${ev.source_reference}`}>
+                              <Link key={eid} href={`/knowledge?highlight=${eid}`}>
                                 {badge}
                               </Link>
                             ) : badge

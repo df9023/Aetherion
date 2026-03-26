@@ -7,6 +7,7 @@ Populates:
 - 2 clients with realistic Swedish pension situations
 - 1 case per client
 - Knowledge items with embeddings for RAG retrieval
+- Knowledge documents from backend/data/knowledge/ (PDF/TXT + .meta.json)
 
 Usage:
     cd backend
@@ -16,12 +17,14 @@ Usage:
 
 import asyncio
 import hashlib
+import json
 import logging
 import sys
 import uuid
 from datetime import date, datetime, timezone
 from decimal import Decimal
 from pathlib import Path
+from typing import Callable, Awaitable
 
 # Ensure the backend package is on the path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -268,6 +271,152 @@ async def _get_embed_fn():
 
 
 # ---------------------------------------------------------------------------
+# Knowledge document ingestion from backend/data/knowledge/
+# ---------------------------------------------------------------------------
+KNOWLEDGE_DIR = Path(__file__).resolve().parent.parent / "data" / "knowledge"
+
+
+def _doc_chunk_uuid(filename: str, chunk_index: int) -> uuid.UUID:
+    """Deterministic UUID for a document chunk — idempotent across re-seeds."""
+    return uuid.uuid5(uuid.NAMESPACE_DNS, f"aetherion.seed.doc.{filename}.chunk.{chunk_index}")
+
+
+async def seed_knowledge_documents(
+    db: AsyncSession,
+    embed_fn: Callable[[str], Awaitable[list[float]]],
+    org_id: uuid.UUID,
+    user_id: uuid.UUID,
+) -> int:
+    """Ingest PDFs/TXTs from backend/data/knowledge/ into knowledge items."""
+    if not KNOWLEDGE_DIR.exists():
+        print(f"  Knowledge dir not found: {KNOWLEDGE_DIR}")
+        return 0
+
+    meta_files = sorted(KNOWLEDGE_DIR.glob("*.meta.json"))
+    if not meta_files:
+        print("  No .meta.json files found in data/knowledge/")
+        return 0
+
+    from app.services.chunker import ChunkerService
+
+    chunker = ChunkerService()
+    total_created = 0
+
+    for meta_path in meta_files:
+        base_name = meta_path.name.removesuffix(".meta.json")
+
+        # Load metadata
+        try:
+            meta = json.loads(meta_path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError) as e:
+            print(f"  WARN: Skipping {meta_path.name} — invalid JSON: {e}")
+            continue
+
+        title = meta.get("title", base_name)
+        category_str = meta.get("category", "product_rule")
+        source = meta.get("source", base_name)
+        tags = meta.get("tags", [])
+
+        try:
+            category = KnowledgeCategory(category_str)
+        except ValueError:
+            print(f"  WARN: Skipping {base_name} — invalid category '{category_str}'")
+            continue
+
+        # Find matching document file (PDF or TXT)
+        pdf_path = KNOWLEDGE_DIR / f"{base_name}.pdf"
+        txt_path = KNOWLEDGE_DIR / f"{base_name}.txt"
+
+        if pdf_path.exists():
+            import io
+            import pdfplumber
+
+            try:
+                text_parts: list[str] = []
+                with pdfplumber.open(pdf_path) as pdf:
+                    for page in pdf.pages:
+                        page_text = page.extract_text() or ""
+                        if page_text.strip():
+                            text_parts.append(page_text)
+                full_text = "\n\n".join(text_parts)
+            except Exception as e:
+                print(f"  WARN: Failed to extract text from {pdf_path.name}: {e}")
+                continue
+        elif txt_path.exists():
+            try:
+                full_text = txt_path.read_text(encoding="utf-8")
+            except OSError as e:
+                print(f"  WARN: Failed to read {txt_path.name}: {e}")
+                continue
+        else:
+            print(f"  WARN: No .pdf or .txt file found for {base_name}, skipping")
+            continue
+
+        if not full_text.strip():
+            print(f"  WARN: {base_name} produced no text, skipping")
+            continue
+
+        # Chunk the document
+        chunks = chunker.chunk_document(
+            text=full_text,
+            source_title=source,
+            metadata={"filename": base_name},
+        )
+
+        if not chunks:
+            print(f"  WARN: {base_name} produced no chunks, skipping")
+            continue
+
+        # Compute deterministic IDs for all chunks of this file
+        chunk_ids = [_doc_chunk_uuid(base_name, i) for i in range(len(chunks))]
+
+        # Delete any existing items with these IDs (idempotent re-seed)
+        for cid in chunk_ids:
+            await db.execute(
+                text("DELETE FROM knowledge_items WHERE id = :id"),
+                {"id": cid},
+            )
+
+        # Create knowledge items
+        for i, chunk in enumerate(chunks):
+            chunk_id = chunk_ids[i]
+
+            if chunk.section_heading:
+                chunk_title = f"{title} — {chunk.section_heading}"
+            else:
+                chunk_title = f"{title} — Del {i + 1}"
+
+            chunk_tags = list(tags)
+            if chunk.section_heading:
+                heading_tag = chunk.section_heading.strip().lower()[:50]
+                if heading_tag not in chunk_tags:
+                    chunk_tags.append(heading_tag)
+
+            embedding = await embed_fn(chunk.content)
+
+            ki = KnowledgeItem(
+                id=chunk_id,
+                organization_id=org_id,
+                title=chunk_title,
+                content=chunk.content,
+                category=category,
+                source=source,
+                tags=chunk_tags,
+                embedding=embedding,
+                is_active=True,
+                created_by=user_id,
+                source_location=chunk.source_location if chunk.source_location else None,
+            )
+            db.add(ki)
+
+        await db.flush()
+        total_created += len(chunks)
+        print(f"  {base_name}: {len(chunks)} chunks ingested")
+
+    return total_created
+
+
+# ---------------------------------------------------------------------------
 # Seed function
 # ---------------------------------------------------------------------------
 async def seed() -> None:
@@ -423,6 +572,10 @@ async def seed() -> None:
             db.add(ki)
 
         await db.flush()
+
+        print("Seeding knowledge from documents...")
+        doc_count = await seed_knowledge_documents(db, embed, ORG_ID, USER_ADMIN_ID)
+
         await db.commit()
 
         print()
@@ -436,7 +589,7 @@ async def seed() -> None:
         print(f"Client 2:      {CLIENT_2_ID}  Lars Pettersson (ITP2, 58 yr)")
         print(f"Case 1:        {CASE_1_ID}  Retirement planning")
         print(f"Case 2:        {CASE_2_ID}  Löneväxling")
-        print(f"Knowledge:     {len(KNOWLEDGE_ITEMS)} items with embeddings")
+        print(f"Knowledge:     {len(KNOWLEDGE_ITEMS)} base items + {doc_count} document chunks")
         print()
 
 
