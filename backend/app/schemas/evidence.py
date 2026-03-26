@@ -24,4 +24,6 @@ class EvidenceResponse(EvidenceBase):
 
     id: UUID
     recommendation_id: UUID
+    verified: bool = True
+    verification_status: str = "verified"
     created_at: datetime

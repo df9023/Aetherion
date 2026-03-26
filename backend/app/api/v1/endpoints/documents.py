@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Optional
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Request, status
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from sqlalchemy import select
@@ -12,6 +12,7 @@ from app.models.base import FileFormat
 from app.models.case import Case
 from app.models.document import Document
 from app.models.recommendation import Recommendation
+from app.rate_limit import limiter
 from app.schemas.document import DocumentResponse
 from app.services.document import DocumentService
 
@@ -28,7 +29,9 @@ class GenerateDocumentRequest(BaseModel):
     status_code=status.HTTP_201_CREATED,
     tags=["recommendations", "documents"],
 )
+@limiter.limit("10/minute")
 async def generate_document(
+    request: Request,
     recommendation_id: UUID,
     body: GenerateDocumentRequest,
     db: DbSession,

@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 from uuid import UUID
 
@@ -16,6 +17,9 @@ from app.models.base import (
     AuditAction,
     ActorType,
 )
+from app.services.citation_validator import CitationValidator
+
+logger = logging.getLogger(__name__)
 
 # Tool definitions for structured output via Claude tool_use
 
@@ -483,8 +487,26 @@ class ReasonerService:
         )
         next_version = version_result.scalar()
 
-        # Build reasoning chain with cost/conflict steps appended
-        reasoning_chain = parsed["reasoning_chain"]
+        # --- Citation validation ---
+        validator = CitationValidator(self.db)
+        from app.api.deps import get_organization_id  # avoid circular at module level
+
+        # Determine org from the case
+        from app.models.case import Case
+
+        case_result = await self.db.execute(select(Case).where(Case.id == case_id))
+        case_obj = case_result.scalar_one()
+        org_id = case_obj.organization_id
+
+        validation = await validator.validate_recommendation(
+            parsed_output=parsed,
+            retrieved_knowledge=knowledge_items,
+            organization_id=org_id,
+        )
+
+        # Use cleaned reasoning chain (only verified evidence_ids)
+        reasoning_chain = validation.reasoning_chain
+        # Re-append IDD disclosures (validator only cleaned the original steps)
         if parsed.get("cost_disclosure"):
             reasoning_chain.append(
                 {
@@ -504,6 +526,12 @@ class ReasonerService:
                 }
             )
 
+        if validation.citation_score < 0.5:
+            logger.warning(
+                "Low citation score %.0f%% for case %s — most citations unverified",
+                validation.citation_score * 100, case_id,
+            )
+
         recommendation = Recommendation(
             case_id=case_id,
             version=next_version,
@@ -518,19 +546,22 @@ class ReasonerService:
         self.db.add(recommendation)
         await self.db.flush()
 
-        # Create evidence entries
-        for evidence_data in parsed.get("evidences", []):
+        # Create evidence entries (include all, with verification status)
+        for ve in validation.evidences:
+            ev_data = ve.original
             evidence = Evidence(
                 recommendation_id=recommendation.id,
-                source_type=EvidenceSourceType(evidence_data["source_type"]),
-                source_reference=evidence_data["source_reference"],
-                content_snippet=evidence_data["content_snippet"],
-                relevance_explanation=evidence_data["relevance_explanation"],
-                confidence=evidence_data["confidence"],
+                source_type=EvidenceSourceType(ev_data["source_type"]),
+                source_reference=ev_data["source_reference"],
+                content_snippet=ev_data["content_snippet"],
+                relevance_explanation=ev_data["relevance_explanation"],
+                confidence=ev_data["confidence"],
+                verified=ve.verified,
+                verification_status=ve.verification_status,
             )
             self.db.add(evidence)
 
-        # Audit entry
+        # Audit entry (with citation validation metadata)
         audit = AuditEntry(
             case_id=case_id,
             action=AuditAction.RECOMMENDATION_GENERATED,
@@ -544,6 +575,8 @@ class ReasonerService:
                 "knowledge_items_retrieved": [
                     str(item.get("id", "")) for item in knowledge_items
                 ],
+                "citation_score": round(validation.citation_score, 2),
+                "citation_warnings": validation.warnings,
             },
         )
         self.db.add(audit)
@@ -578,7 +611,20 @@ class ReasonerService:
 
         parsed = self._extract_tool_input(response, "generate_recommendation")
 
-        reasoning_chain = parsed["reasoning_chain"]
+        # --- Citation validation ---
+        validator = CitationValidator(self.db)
+        ki_list = knowledge_items or []
+        validation = await validator.validate_recommendation(
+            parsed_output=parsed,
+            retrieved_knowledge=ki_list,
+            organization_id=recommendation.organization_id
+            if hasattr(recommendation, "organization_id")
+            else (await self.db.execute(
+                select(Case).where(Case.id == recommendation.case_id)
+            )).scalar_one().organization_id,
+        )
+
+        reasoning_chain = validation.reasoning_chain
         if parsed.get("cost_disclosure"):
             reasoning_chain.append(
                 {
@@ -598,6 +644,12 @@ class ReasonerService:
                 }
             )
 
+        if validation.citation_score < 0.5:
+            logger.warning(
+                "Low citation score %.0f%% for refined recommendation (case %s)",
+                validation.citation_score * 100, recommendation.case_id,
+            )
+
         new_recommendation = Recommendation(
             case_id=recommendation.case_id,
             version=recommendation.version + 1,
@@ -612,15 +664,18 @@ class ReasonerService:
         self.db.add(new_recommendation)
         await self.db.flush()
 
-        # Create evidence entries for the new version
-        for evidence_data in parsed.get("evidences", []):
+        # Create evidence entries with verification status
+        for ve in validation.evidences:
+            ev_data = ve.original
             evidence = Evidence(
                 recommendation_id=new_recommendation.id,
-                source_type=EvidenceSourceType(evidence_data["source_type"]),
-                source_reference=evidence_data["source_reference"],
-                content_snippet=evidence_data["content_snippet"],
-                relevance_explanation=evidence_data["relevance_explanation"],
-                confidence=evidence_data["confidence"],
+                source_type=EvidenceSourceType(ev_data["source_type"]),
+                source_reference=ev_data["source_reference"],
+                content_snippet=ev_data["content_snippet"],
+                relevance_explanation=ev_data["relevance_explanation"],
+                confidence=ev_data["confidence"],
+                verified=ve.verified,
+                verification_status=ve.verification_status,
             )
             self.db.add(evidence)
 
@@ -642,6 +697,8 @@ class ReasonerService:
                 "feedback": feedback[:500],
                 "llm_model": "claude-sonnet-4-20250514",
                 "prompt_template": "refine_recommendation.j2",
+                "citation_score": round(validation.citation_score, 2),
+                "citation_warnings": validation.warnings,
             },
         )
         self.db.add(audit)

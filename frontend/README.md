@@ -1,36 +1,29 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Aetherion Frontend
 
-## Getting Started
+Next.js 14 (App Router) with shadcn/ui (New York), Tailwind CSS, and React Query.
 
-First, run the development server:
+## Quick Start
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev          # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Requires the backend running at `http://localhost:8000`. See root `SETUP.md`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Architecture
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `app/(dashboard)/` — All pages behind the app shell (sidebar + top bar)
+- `components/` — Feature components (meeting brief viewer, document ingestion, dialogs)
+- `components/ui/` — shadcn/ui primitives
+- `lib/api.ts` — API client with dev auth headers
+- `lib/hooks.ts` — React Query hooks for all backend endpoints
+- `lib/labels.ts` — Status/category labels and color maps
 
-## Learn More
+## Data Layer
 
-To learn more about Next.js, take a look at the following resources:
+All data comes from the backend via React Query. No mock data in production code.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `useQuery` hooks for reads (cases, clients, knowledge, recommendations, audit)
+- `useMutation` hooks for writes (create case/client, generate recommendation/brief, upload document)
+- Dev auth bypass via `X-Dev-User-Id` / `X-Dev-Org-Id` headers (configured in `.env.local`)

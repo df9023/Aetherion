@@ -9,6 +9,14 @@ Generera en strukturerad pensionsrekommendation baserat på klientens situation 
 ## Hämtade kunskapsartiklar
 
 Använd dessa som evidens i din rekommendation. Citera dem med deras ID i reasoning_chain.evidence_ids.
+
+**VIKTIGT — Citeringsregler:**
+- Citera ALLTID med exakt kunskapsartikel-ID (UUID). Hitta INTE på egna referenser.
+- Varje evidens `content_snippet` MÅSTE vara ett ordagrant utdrag ur den citerade kunskapsartikeln — parafrasera INTE.
+- `source_reference` MÅSTE vara artikelns UUID, t.ex. `[a1b2c3d4-...]`.
+- Om du inte hittar en relevant kunskapsartikel, ange `source_type: "domain_expertise"` och beskriv grunden i `relevance_explanation` — citera INTE en artikel du inte fått.
+- Citera INTE samma artikel mer än en gång om det inte stöder olika resonemangssteg.
+- Varje resonemangssteg (reasoning_chain) SKA ha minst ett `evidence_id` som stödjer slutsatsen, om relevant evidens finns tillgänglig.
 {% if knowledge_items %}
 {% for item in knowledge_items %}
 ### [{{ item.id }}] {{ item.title }}

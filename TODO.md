@@ -10,16 +10,15 @@
 - [x] Domain models (Organization, User, Client, Case, Recommendation, Evidence, AuditEntry, KnowledgeItem, Document, Workflow)
 - [x] Alembic migration with pgvector
 - [x] CRUD API endpoints (cases, clients, recommendations, knowledge) — org-scoped
-- [x] Multi-tenant isolation (organization_id on all entities including Client)
+- [x] Multi-tenant isolation (organization_id on all entities)
 - [x] PII encryption at rest (Fernet on client name, external_id)
 - [x] Audit trail on every state change
 - [x] Docker Compose (PostgreSQL with pgvector + Redis)
 - [x] Seed script with realistic Swedish pension data (SPP as example org)
-- [x] ValueEnum helper for PostgreSQL enum compatibility
 
 ### Reasoner (Module 2) — AI Recommendation Engine
 - [x] Reasoner with Claude tool_use for guaranteed structured output
-- [x] `POST /api/v1/cases/{case_id}/generate-recommendation` (core product loop)
+- [x] `POST /api/v1/cases/{case_id}/generate-recommendation`
 - [x] CaseType → RecommendationType inference
 - [x] Optional additional_context from advisor
 - [x] Recommendation refinement with version history (superseded tracking)
@@ -33,7 +32,7 @@
 - [x] `GET /api/v1/documents/{id}/download`
 
 ### Memory (Module 4) — Knowledge & RAG
-- [x] OpenAI `text-embedding-3-small` integrated in MemoryService
+- [x] OpenAI text-embedding-3-small integrated in MemoryService
 - [x] Graceful fallback to hash-based embeddings when no API key
 - [x] RAG retrieval returns semantically correct results
 - [x] Knowledge CRUD + semantic search API
@@ -42,145 +41,91 @@
 - [x] Flow service (workflow orchestration with step completion, pause/resume)
 - [x] Pipeline test (end-to-end verification)
 
+### Meeting Brief Generation
+- [x] MEETING_BRIEF_TOOL (Claude tool_use schema)
+- [x] meeting_brief.j2 Jinja2 prompt template (Swedish)
+- [x] `POST /api/v1/cases/{case_id}/generate-brief`
+- [x] Frontend: "Prepare Meeting" button with generating/generated states
+- [x] Meeting brief viewer (pillar cards, severity badges, scenarios, agenda)
+
+### Document Ingestion
+- [x] DOCUMENT_EXTRACTION_TOOL (Claude tool_use schema with confidence scoring)
+- [x] document_extraction.j2 Jinja2 prompt template (Swedish)
+- [x] `POST /api/v1/clients/{id}/ingest-document` (PDF upload, text extraction, Claude vision fallback)
+- [x] `POST /api/v1/clients/{id}/apply-extraction` (apply confirmed fields to client)
+- [x] Frontend: document ingestion component (upload → extracting → review with confidence indicators)
+
 ### Frontend (Workbench UI)
 - [x] Next.js 14 + shadcn/ui + Tailwind scaffolded
 - [x] App shell (dark sidebar, top bar with breadcrumbs)
 - [x] Cases list with search, status/type filters
-- [x] Case detail with client info, AI recommendation (generate, reasoning chain, evidence, scenarios, suitability score)
-- [x] "Generate Recommendation" button → calls AI endpoint
+- [x] Case detail with client info, meeting brief, AI recommendation, knowledge panel, audit trail
 - [x] Document generation + download
-- [x] Knowledge search panel in case detail
-- [x] Audit trail timeline
 - [x] Clients list with search
-- [x] Client detail page with linked cases
+- [x] Client detail page with document ingestion and linked cases
 - [x] Knowledge base page with category tabs
-- [x] Create Client dialog (full form)
-- [x] Create Case dialog (client selector, redirects to new case)
+- [x] Create Client dialog + Create Case dialog
 - [x] Case status transitions (dropdown with valid next states)
-- [x] Real breadcrumbs (API-driven, not mock data)
 - [x] React Query hooks wired to all backend endpoints
-- [x] Global error handling (toast on mutation errors)
 - [x] Dev auth bypass (X-Dev-User-Id / X-Dev-Org-Id headers)
 
 ---
 
-## SPP Demo — Must Have (Priority 1-3)
+## In Progress
 
-### 1. Case Prep / Meeting Brief Generation ← **THE WOW MOMENT**
-> *"This is the single most requested feature across the industry."*
-> Conquest, Zocks, Wavvest all attack this. For pension advisors: pull the client's full situation, identify gaps, pre-generate scenarios, have a draft agenda ready.
-
-- [ ] **New endpoint**: `POST /api/v1/cases/{case_id}/generate-brief`
-  - Takes client data + case context
-  - Calls Claude to generate a structured meeting brief
-  - Output: pension overview across all three pillars (allmän, tjänste, privat), key issues flagged, pre-modeled scenarios, talking points, suggested agenda
-- [ ] **Pydantic schema** for `MeetingBrief` — structured output with sections:
-  - Client overview (age, employer, agreement, income, years to retirement)
-  - Pension situation summary (current holdings per pillar, projected outcomes)
-  - Key issues & gaps identified
-  - Pre-modeled scenarios (retirement age variations, salary exchange options)
-  - Talking points / agenda items
-  - Open questions for the client
-- [ ] **Jinja2 prompt template** in `backend/app/prompts/meeting_brief.j2`
-- [ ] **Frontend: "Prepare Meeting" button** on case detail page
-  - Shows generating state → then renders the brief in a clean, printable card layout
-  - Option to download as PDF (reuse DocumentService)
-- [ ] **Frontend: Meeting brief viewer** — expandable sections matching the schema
-- [ ] Store generated brief on the case (new field or as a document)
-
-### 2. Recommendation with Full Reasoning Chain — DONE
-- [x] Already built and working end-to-end
-- [ ] **Polish**: Ensure the output format matches what Swedish compliance teams expect
-  - [ ] Review behovsanalys section against FI expectations
-  - [ ] Review lämplighetsbedömning section format
-  - [ ] Review kostnadsinformation section (total cost, impact on return)
-
-### 3. Compliance Documentation Output — DONE (polish needed)
-- [x] 9-section recommendation pack generated
-- [ ] **Polish**: Validate output with someone who's seen real FI-reviewed documentation
-- [ ] **Add**: Separate behovsanalys document type (needs analysis as standalone doc)
-- [ ] **Add**: Separate lämplighetsbedömning document type (suitability assessment as standalone)
+### Visual Redesign
+- [ ] v0 prototype generated (reference in `v0-reference/`)
+- [ ] Claude Code prompt ready (`prompts/claude-code-visual-redesign.md`)
+- [ ] Apply v0 visual design to existing frontend (keep data layer intact)
 
 ---
 
-## SPP Demo — Should Have (Priority 4-5)
+## Next Up
 
-### 4. Knowledge Retrieval — Natural Language Q&A
-> *"Pension advisors constantly need to look up product rules, internal policies, fee structures."*
-> Conquest's SAM Guide does this. Your Memory module is already specced and partly built.
+### Compliance Documentation Polish
+- [ ] Review behovsanalys section against FI expectations
+- [ ] Review lämplighetsbedömning section format
+- [ ] Review kostnadsinformation section (total cost, impact on return)
+- [ ] Separate behovsanalys document type (standalone)
+- [ ] Separate lämplighetsbedömning document type (standalone)
 
-- [x] Semantic search works (POST /knowledge/search)
-- [x] Knowledge panel in case detail
-- [ ] **Upgrade to conversational Q&A**: advisor types a question → Memory retrieves context → Claude generates a direct answer with source citations
-  - New endpoint: `POST /api/v1/knowledge/ask`
-  - Input: `{ question: string }`
-  - Output: `{ answer: string, sources: KnowledgeItem[] }`
-  - Uses RAG: embed question → retrieve top-k → Claude answers grounded in retrieved context
-- [ ] **Frontend**: Replace or augment the knowledge search panel with a Q&A chat interface
-  - Show the answer with inline source references
-  - Keep the list view as a fallback/browse mode
-
-### 5. Document Ingestion — Upload & Extract
-> *"Upload a PDF pension statement → auto-extract data → populate client profile. This alone saves 20-30 minutes per case."*
-> Conquest's LLM Data Migration, RightCapital's Smart Import — both getting massive traction.
-
-- [ ] **New endpoint**: `POST /api/v1/clients/{client_id}/ingest-document`
-  - Accepts PDF/image upload (pensionsbesked, lönespecifikation, insurance policy)
-  - Uses Claude vision or text extraction to parse the document
-  - Returns structured data: pension holdings, provider, fees, coverage details
-  - Optionally auto-updates client profile fields
-- [ ] **Pydantic schema** for extracted pension data
-- [ ] **Frontend**: Upload button on client detail page
-  - Drag-and-drop or file picker
-  - Shows extraction results for advisor review before confirming
-  - "Accept & Update Profile" button to apply extracted data
-
----
-
-## Post-Demo — Build After SPP Validation
-
-### Scenario Modeling (Medium Priority)
-> *Collapse multi-step scenario modeling into single workflows.*
-
-- [ ] Scenario comparison mode: input 2-3 parameter variations, get side-by-side outcomes
-- [ ] Parameters: retirement age, withdrawal sequence, salary exchange amounts, fund allocation
-- [ ] Frontend: interactive scenario builder with comparison cards
-
-### Post-Meeting Follow-up (Lower Priority)
-> *Auto-generate: summary email to client, internal notes, follow-up tasks, next review date.*
-
-- [ ] Meeting notes input (manual or transcription)
-- [ ] Auto-generate: client summary email (Swedish), internal case notes, follow-up tasks
-- [ ] Wire into Flow module for task tracking
+### Knowledge Q&A (conversational)
+- [ ] `POST /api/v1/knowledge/ask` — question in, grounded answer + sources out
+- [ ] Frontend: Q&A chat interface in knowledge panel (augment existing search)
 
 ### Auth & Security
 - [ ] WorkOS integration (SSO, SAML, directory sync)
 - [ ] Replace dev JWT stub with real auth flow
 - [ ] Role-based access control on all endpoints
+- [ ] Rate limiting on LLM endpoints
+
+---
+
+## Post-Demo — Build After SPP Validation
+
+### Scenario Modeling
+- [ ] Scenario comparison mode: 2-3 parameter variations, side-by-side outcomes
+- [ ] Frontend: interactive scenario builder with comparison cards
+
+### Post-Meeting Follow-up
+- [ ] Meeting notes input (manual or transcription)
+- [ ] Auto-generate: client summary email (Swedish), internal notes, follow-up tasks
 
 ### Async Tasks
 - [ ] Celery + Redis for background jobs
-- [ ] Async document generation
-- [ ] Async recommendation generation (for long-running cases)
-
-### Workflow Endpoints
-- [ ] Expose FlowService via API
-- [ ] Wire workflow status to case status transitions
-- [ ] UI for workflow progress tracking
-
-### Testing
-- [ ] pytest suite for all endpoints
-- [ ] Service-layer unit tests (Reasoner, Control, Memory, Flow)
-- [ ] Integration tests with test database
+- [ ] Async document/recommendation generation
 
 ### Production Readiness
 - [ ] CI/CD via GitHub Actions (lint, test, build)
 - [ ] Azure deployment (EU-region)
 - [ ] Sentry for error monitoring
 - [ ] PostHog for product analytics
-- [ ] Rate limiting on LLM endpoints
-- [ ] Request logging (non-PII)
 - [ ] Neon or Supabase for managed PostgreSQL
+
+### Testing
+- [ ] pytest suite for all endpoints
+- [ ] Service-layer unit tests
+- [ ] Integration tests with test database
 
 ---
 

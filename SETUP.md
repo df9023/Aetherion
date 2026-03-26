@@ -10,7 +10,7 @@
 |------|---------|-----|
 | **Python** | 3.11+ | Backend runtime |
 | **Docker + Docker Compose** | Latest | PostgreSQL (pgvector) + Redis |
-| **Node.js** | 20+ (via nvm) | Frontend (when migrated from v0) |
+| **Node.js** | 20+ (via nvm) | Frontend |
 | **Git** | Any | Version control |
 
 ### Installing prerequisites (Ubuntu / WSL)
@@ -126,11 +126,18 @@ The API is now running at **http://localhost:8000**.
 
 ---
 
-## 6. Frontend (v0.dev prototype)
+## 6. Seed the database
 
-The Workbench UI is currently being prototyped in [v0.dev](https://v0.dev). No local frontend setup needed yet.
+```bash
+# In backend/ with venv activated
+python scripts/seed.py
+```
 
-When ready to migrate:
+This populates the dev database with SPP as the example organization, two users (advisor + admin), sample clients, cases, knowledge items, and audit entries.
+
+---
+
+## 7. Start the frontend
 
 ```bash
 cd frontend
@@ -138,7 +145,17 @@ npm install
 npm run dev
 ```
 
-Frontend will run at **http://localhost:3000**.
+Frontend runs at **http://localhost:3000**.
+
+The frontend needs environment variables for the dev auth bypass. These should already exist in `frontend/.env.local`:
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+NEXT_PUBLIC_DEV_USER_ID=<user-id-from-seed>
+NEXT_PUBLIC_DEV_ORG_ID=<org-id-from-seed>
+```
+
+If the file doesn't exist, run the seed script first — it prints the IDs you need.
 
 ---
 
@@ -146,7 +163,7 @@ Frontend will run at **http://localhost:3000**.
 
 ```bash
 # --- Infrastructure ---
-docker compose up -d          # Start PostgreSQL + Redis
+docker compose up db -d       # Start PostgreSQL (pgvector)
 docker compose down           # Stop everything
 docker compose logs -f db     # Watch database logs
 
@@ -154,6 +171,12 @@ docker compose logs -f db     # Watch database logs
 cd backend
 source .venv/bin/activate     # Activate virtualenv (every new terminal)
 uvicorn app.main:app --reload # Start dev server
+python scripts/seed.py        # Seed/reset dev data
+
+# --- Frontend ---
+cd frontend
+npm run dev                   # Start Next.js dev server
+npm run build                 # Production build (check for errors)
 
 # --- Database ---
 alembic upgrade head          # Run all migrations
@@ -164,11 +187,6 @@ alembic revision --autogenerate -m "description"  # Create new migration
 pytest                        # Run all tests
 pytest -v                     # Verbose output
 pytest --cov=app              # With coverage report
-
-# --- Linting ---
-ruff check app/               # Lint
-black app/                    # Format
-mypy app/                     # Type check
 ```
 
 ---
@@ -195,27 +213,37 @@ Aetherion/
 │   ├── requirements.txt
 │   ├── alembic.ini               # Migration config
 │   ├── alembic/
-│   │   ├── env.py
 │   │   └── versions/             # Migration files
+│   ├── scripts/
+│   │   ├── seed.py               # Dev data seeder
+│   │   └── test_pipeline.py      # End-to-end integration test
 │   └── app/
 │       ├── main.py               # FastAPI entry point
 │       ├── config.py             # Pydantic settings
 │       ├── database.py           # Async SQLAlchemy engine + session
 │       ├── api/
-│       │   ├── deps.py           # Auth + DB dependencies
+│       │   ├── deps.py           # Auth + DB dependencies (dev bypass)
 │       │   └── v1/endpoints/     # Route handlers
 │       ├── models/               # SQLAlchemy models
 │       ├── schemas/              # Pydantic request/response schemas
-│       ├── services/             # Business logic
-│       │   ├── reasoner.py       # LLM recommendation engine
-│       │   ├── control.py        # Compliance checks + audit
+│       ├── services/
+│       │   ├── reasoner.py       # LLM reasoning + meeting briefs + doc extraction
+│       │   ├── control.py        # Compliance checks + document generation
 │       │   ├── memory.py         # RAG / semantic search
 │       │   └── flow.py           # Workflow orchestration
 │       ├── prompts/              # Jinja2 LLM prompt templates
 │       └── utils/
 │           └── encryption.py     # PII encryption (Fernet)
 │
-└── frontend/                     # Next.js app (after v0 migration)
+├── frontend/                     # Next.js 14 app
+│   ├── app/(dashboard)/          # Dashboard pages (cases, clients, knowledge)
+│   ├── components/               # UI components + feature components
+│   └── lib/
+│       ├── api.ts                # API client with dev auth
+│       ├── hooks.ts              # React Query hooks for all endpoints
+│       └── labels.ts             # UI labels, status colors, category styles
+│
+└── v0-reference/                 # v0.dev visual prototype (reference only, delete after redesign)
 ```
 
 ---
@@ -262,13 +290,9 @@ sudo apt install libpango-1.0-0 libpangocairo-1.0-0 libgdk-pixbuf2.0-0 libffi-de
 
 ## What to Build Next
 
-See `Aetherion.md` for product roadmap. Current backend priority order:
+See `TODO.md` for the full task list. Current priorities:
 
-1. ~~Database models~~ Done
-2. ~~Basic CRUD API~~ Done
-3. Workbench UI in v0.dev (consuming the API)
-4. Wire up Reasoner with Claude tool_use for structured output
-5. Wire up Memory with real embedding model (OpenAI or Voyage)
-6. Document generation (recommendation packs)
-7. WorkOS auth integration
-8. Migrate frontend from v0 into repo
+1. Visual redesign (apply v0 reference to existing frontend)
+2. Compliance documentation polish
+3. Knowledge Q&A (conversational)
+4. Auth & security (WorkOS, rate limiting)

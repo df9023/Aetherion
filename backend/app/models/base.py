@@ -103,6 +103,7 @@ class AuditAction(str, enum.Enum):
     MEETING_BRIEF_GENERATED = "meeting_brief_generated"
     DOCUMENT_INGESTED = "document_ingested"
     CLIENT_DATA_APPLIED = "client_data_applied"
+    KNOWLEDGE_INGESTED = "knowledge_ingested"
 
 
 class ActorType(str, enum.Enum):

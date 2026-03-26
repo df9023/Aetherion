@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 from decimal import Decimal
 
-from sqlalchemy import String, Text, DateTime, ForeignKey, Numeric
+from sqlalchemy import Boolean, String, Text, DateTime, ForeignKey, Numeric
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -30,6 +30,10 @@ class Evidence(Base):
     content_snippet: Mapped[str] = mapped_column(Text, nullable=False)
     relevance_explanation: Mapped[str] = mapped_column(Text, nullable=False)
     confidence: Mapped[Decimal] = mapped_column(Numeric(3, 2), nullable=False)
+    verified: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    verification_status: Mapped[str] = mapped_column(
+        String(30), nullable=False, default="verified"
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=datetime.utcnow
     )

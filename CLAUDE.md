@@ -2,23 +2,23 @@
 
 ## What is Aetherion?
 
-Aetherion (RetirementOS) is an AI-native decision workspace for pension, retirement, and long-term savings institutions. We help advisors, insurers, and pension operations teams reason through complex cases, generate compliant documentation, capture institutional knowledge, and execute workflows on top of legacy systems.
+Aetherion is an AI-native decision workspace for pension, retirement, and long-term savings institutions. We help advisors, insurers, and pension operations teams reason through complex cases, generate compliant documentation, capture institutional knowledge, and execute workflows on top of legacy systems.
 
-Starting market: Swedish occupational pension advisory workflows.
+Starting market: Swedish occupational pension advisory workflows. Example org in dev: **SPP**.
 
 ## Architecture
 
-Monolithic FastAPI backend + Next.js frontend. PostgreSQL + pgvector for data and embeddings. See `docs/ARCHITECTURE_DECISIONS.md` for rationale on all major decisions.
+Monolithic FastAPI backend + Next.js 14 frontend. PostgreSQL + pgvector for data and embeddings.
 
-**Frontend approach:** The initial Workbench UI is being prototyped in v0.dev (Vercel), then migrated into the repo as a Next.js app. Until migration, the frontend/ directory may be empty or minimal. Focus Claude Code efforts on the backend, API design, and ensuring API contracts are clean enough for the v0 prototype to consume.
+See `docs/ARCHITECTURE_DECISIONS.md` for rationale on all major decisions.
 
 ## Five Modules
 
-1. **Workbench** — advisor-facing case workspace (frontend-heavy)
-2. **Reasoner** — LLM reasoning engine, structured outputs (backend: `services/reasoner.py`)
-3. **Control** — compliance checks, audit trail (backend: `services/control.py`)
-4. **Memory** — RAG over institutional knowledge (backend: `services/memory.py`)
-5. **Flow** — workflow orchestration (backend: `services/flow.py`)
+1. **Workbench** — advisor-facing case workspace (`frontend/`)
+2. **Reasoner** — LLM reasoning engine with Claude tool_use for structured outputs (`backend/app/services/reasoner.py`)
+3. **Control** — compliance checks, audit trail, document generation (`backend/app/services/control.py`)
+4. **Memory** — RAG over institutional knowledge with pgvector (`backend/app/services/memory.py`)
+5. **Flow** — workflow orchestration (`backend/app/services/flow.py`)
 
 ## Key Reference Documents
 
@@ -42,31 +42,60 @@ Read these BEFORE building features in these areas:
 ## Tech Stack
 
 - Backend: Python 3.11+ / FastAPI
-- Frontend: v0.dev (prototype) → Next.js 14+ / React / TypeScript / shadcn/ui / Tailwind (production)
-- Database: PostgreSQL + pgvector
-- LLM: Anthropic Claude API
-- Auth: WorkOS
+- Frontend: Next.js 14 / React / TypeScript / shadcn/ui (New York) / Tailwind CSS
+- Database: PostgreSQL 16 + pgvector
+- LLM: Anthropic Claude API (tool_use for structured output)
+- Embeddings: OpenAI text-embedding-3-small (for RAG)
+- Auth: WorkOS (planned), dev bypass via X-Dev-User-Id / X-Dev-Org-Id headers
 - Doc generation: python-docx, WeasyPrint, Jinja2
-- Infra: Docker, Azure (EU-region)
+- PDF extraction: pdfplumber
+- Infra: Docker Compose (dev), Azure EU-region (prod, planned)
 
 ## Common Commands
 
 ```bash
+# Infrastructure
+docker compose up db -d              # Start PostgreSQL (pgvector)
+
 # Backend
 cd backend
+source .venv/bin/activate
 pip install -r requirements.txt
 uvicorn app.main:app --reload
 
 # Database
-docker compose up db -d
-alembic upgrade head
+alembic upgrade head                 # Run migrations
+python scripts/seed.py               # Seed dev data (SPP org, users, clients, cases, knowledge)
 
-# Run tests
+# Frontend
+cd frontend
+npm install
+npm run dev                          # http://localhost:3000
+
+# Tests
 cd backend && pytest
-
-# Frontend (after migration from v0)
-# cd frontend && npm install && npm run dev
 ```
+
+## Key Backend Endpoints
+
+- `POST /api/v1/cases/{id}/generate-recommendation` — AI recommendation with reasoning chain
+- `POST /api/v1/cases/{id}/generate-brief` — Meeting brief generation
+- `POST /api/v1/recommendations/{id}/generate-document` — Compliance doc (DOCX/PDF)
+- `GET /api/v1/documents/{id}/download` — Download generated document
+- `POST /api/v1/clients/{id}/ingest-document` — PDF upload + AI data extraction
+- `POST /api/v1/clients/{id}/apply-extraction` — Apply extracted data to client profile
+- `POST /api/v1/knowledge/search` — Semantic search over knowledge base
+
+## Frontend Data Layer
+
+- API client: `frontend/lib/api.ts` (apiFetch, apiUpload, apiDownload with dev auth headers)
+- React Query hooks: `frontend/lib/hooks.ts` (all backend endpoints wired)
+- UI labels/styles: `frontend/lib/labels.ts`
+- Providers: `frontend/components/providers.tsx` (QueryClientProvider)
+
+## Dev Auth Bypass
+
+In debug mode, the backend accepts `X-Dev-User-Id` and `X-Dev-Org-Id` headers instead of JWT tokens. The frontend sends these automatically from `.env.local`. Seed data IDs are deterministic.
 
 ## Domain Terminology
 
@@ -77,3 +106,4 @@ Use these terms consistently:
 - `audit_entry` (not log)
 - `knowledge_item` (not document/chunk)
 - `suitability_assessment` (not compliance check — that's a different thing)
+- `meeting_brief` (not prep/summary)

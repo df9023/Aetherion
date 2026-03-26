@@ -1,11 +1,30 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import { Sidebar } from "@/components/sidebar"
 import { Providers } from "@/components/providers"
 import { Toaster } from "@/components/ui/sonner"
+import { isAuthenticated } from "@/lib/auth"
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const router = useRouter()
+  const [checked, setChecked] = useState(false)
+
+  useEffect(() => {
+    // In dev mode, skip auth check if dev headers are configured
+    const devUserId = process.env.NEXT_PUBLIC_DEV_USER_ID
+    if (devUserId) {
+      setChecked(true)
+      return
+    }
+    if (!isAuthenticated()) {
+      router.replace("/login")
+      return
+    }
+    setChecked(true)
+  }, [router])
+
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       const tag = (e.target as HTMLElement).tagName
@@ -20,6 +39,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
   }, [])
+
+  if (!checked) {
+    return null
+  }
 
   return (
     <Providers>

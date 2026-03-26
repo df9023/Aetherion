@@ -71,6 +71,8 @@ export interface EvidenceResponse {
   content_snippet: string
   relevance_explanation: string
   confidence: string
+  verified: boolean
+  verification_status: "verified" | "partially_verified" | "unverified"
   created_at: string
 }
 
@@ -385,6 +387,29 @@ export function useIngestDocument(clientId: string) {
         `/clients/${clientId}/ingest-document`,
         formData,
       )
+    },
+  })
+}
+
+// Knowledge ingestion
+export interface KnowledgeIngestResponse {
+  items_created: number
+  chunks: { id: string; title: string; content_preview: string }[]
+}
+
+export function useIngestKnowledge() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (data: { file: File; category: string; source: string; tags: string }) => {
+      const formData = new FormData()
+      formData.append("file", data.file)
+      formData.append("category", data.category)
+      formData.append("source", data.source)
+      formData.append("tags", data.tags)
+      return apiUpload<KnowledgeIngestResponse>("/knowledge/ingest-document", formData)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["knowledge"] })
     },
   })
 }
