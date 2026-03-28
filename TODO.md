@@ -158,6 +158,38 @@
 - [ ] Frontend: org settings page for managing product catalog
 - [ ] Frontend: recommendation shows which specific products were considered and why
 
+### Deterministic Rules Engine
+> Principle: LLM should only generate narrative. Everything that can be computed — scores, costs, rates, eligibility — must be calculated in code. Compute first, narrate second.
+
+**Suitability scoring (replace LLM-generated score):**
+- [ ] `SuitabilityEngine` service — weighted rules-based scoring
+- [ ] Factors: risk profile match, age appropriateness, income fit, agreement eligibility, investment horizon
+- [ ] Each factor scored 0-1 with configurable weight, combined into final score
+- [ ] Score + factor breakdown injected into LLM prompt as facts (LLM explains, doesn't score)
+
+**Pension calculations (replace LLM-invented numbers):**
+- [ ] `PensionCalculator` service — deterministic math for Swedish pension system
+- [ ] Allmän pension: income pension + premium pension estimate based on income + age
+- [ ] Tjänstepension contribution rates: ITP1 (4.5% ≤ 7.5 IBB, 30% above), SAF-LO (4.5%), AKAP-KR, PA16
+- [ ] Salary exchange: tax savings = marginal rate × exchange amount
+- [ ] Projected pension: capital × annuity factor (based on retirement age + life expectancy tables)
+- [ ] IBB (inkomstbasbelopp) lookup table, updated yearly
+
+**Cost calculations (replace LLM guesses):**
+- [ ] Calculate from Product Catalog: total fee = platform fee + fund fee + insurance fee
+- [ ] Cost impact on return: compound effect over investment horizon
+- [ ] Scenario costs: deterministic diff between current and recommended product costs
+
+**Eligibility rules:**
+- [ ] Collective agreement → eligible providers/products (lookup table)
+- [ ] Age → retirement window, early withdrawal rules
+- [ ] Income thresholds for salary exchange viability
+
+**Refactored LLM prompts:**
+- [ ] Pass 1 prompt receives computed facts: suitability score, costs, pension estimates, eligibility
+- [ ] LLM generates narrative summary, assumptions, and explanations around the facts
+- [ ] LLM does NOT produce numbers — only explains the pre-computed numbers
+
 ### Scenario Modeling
 - [ ] Scenario comparison mode: 2-3 parameter variations, side-by-side outcomes
 - [ ] Frontend: interactive scenario builder with comparison cards
@@ -194,9 +226,47 @@
 - [ ] Neon or Supabase for managed PostgreSQL
 
 ### Testing
-- [ ] pytest suite for all endpoints
-- [ ] Service-layer unit tests
-- [ ] Integration tests with test database
+> Stack: pytest + pytest-asyncio + httpx AsyncClient. Mock all LLM calls. Test database via Docker or SQLite.
+
+**Test infrastructure:**
+- [ ] `conftest.py` — test database setup, async session fixtures, test client factory
+- [ ] `factories.py` — Factory functions for Organization, User, Client, Case, Recommendation
+- [ ] LLM mock fixtures — deterministic Claude API responses for all tool schemas
+- [ ] CI integration — tests run on every PR via GitHub Actions
+
+**API endpoint tests (one test file per endpoint module):**
+- [ ] `test_cases.py` — CRUD, status transitions, org isolation, invalid transitions rejected
+- [ ] `test_clients.py` — CRUD, search, org isolation, PII encryption verified
+- [ ] `test_recommendations.py` — generate, refine, evidence, document generation + download
+- [ ] `test_knowledge.py` — CRUD, search, ingest, semantic search returns results
+- [ ] `test_auth.py` — WorkOS flow, dev bypass only in debug mode, JWT validation
+- [ ] `test_health.py` — health endpoint returns 200
+
+**Service-layer unit tests:**
+- [ ] `test_reasoner.py` — two-pass flow, structured output parsing, error handling, citation mapping
+- [ ] `test_control.py` — all 5 compliance checks pass/fail correctly, audit entries created
+- [ ] `test_memory.py` — embedding, search, chunking, knowledge CRUD
+- [ ] `test_document.py` — DOCX generation, PDF generation, cost formatting, all 9 IDD sections
+- [ ] `test_flow.py` — workflow step completion, pause/resume, state transitions
+- [ ] `test_chunker.py` — document chunking produces expected chunk count and sizes
+
+**Multi-tenancy tests:**
+- [ ] Org A cannot see Org B's cases, clients, recommendations, knowledge
+- [ ] All list endpoints return only org-scoped data
+- [ ] Cross-org access returns 404, not 403 (no information leakage)
+
+**Deterministic rules engine tests (when built):**
+- [ ] `test_suitability.py` — known inputs → known score, each factor tested independently
+- [ ] `test_pension_calc.py` — ITP1/SAF-LO/AKAP-KR rates verified against published values
+- [ ] `test_cost_calc.py` — fee calculations match hand-computed expected values
+- [ ] `test_eligibility.py` — agreement → provider mapping is correct
+
+**Security tests:**
+- [ ] Dev bypass blocked when DEBUG=false
+- [ ] PII fields encrypted in database, decrypted on read
+- [ ] Rate limiting enforced on LLM endpoints
+- [ ] Invalid JWT returns 401
+- [ ] Self-approval of own recommendation rejected
 
 ---
 

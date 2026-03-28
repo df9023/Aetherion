@@ -17,6 +17,9 @@ from app.models.base import (
     AuditAction,
     ActorType,
 )
+from app.services.pension_calculator import PensionCalculator
+from app.services.eligibility import EligibilityChecker
+from app.services.suitability import SuitabilityEngine
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +50,6 @@ RECOMMENDATION_TOOL = {
         "required": [
             "summary",
             "assumptions",
-            "suitability_score",
             "cost_disclosure",
             "conflict_disclosure",
         ],
@@ -99,12 +101,6 @@ RECOMMENDATION_TOOL = {
                         },
                     },
                 },
-            },
-            "suitability_score": {
-                "type": "number",
-                "minimum": 0.0,
-                "maximum": 1.0,
-                "description": "Overall suitability score (0.0-1.0). Consider: does the recommendation match the client's risk profile, financial situation, knowledge level, and stated objectives?",
             },
             "cost_disclosure": {
                 "type": "string",
@@ -581,6 +577,22 @@ class ReasonerService:
         Pass 1: tool_use for structured fields (summary, assumptions, scenarios, etc.)
         Pass 2: Citations API for evidence and reasoning chain with native citations
         """
+        # --- Compute deterministic facts before LLM call ---
+        client_dict = context.get("client", {})
+
+        pension_calc = PensionCalculator()
+        pension_estimate = pension_calc.calculate(client_dict)
+
+        eligibility_checker = EligibilityChecker()
+        eligibility_result = eligibility_checker.check(
+            client_dict, recommendation_type.value
+        )
+
+        context["computed"] = {
+            "pension_estimate": pension_estimate.model_dump(),
+            "eligibility": eligibility_result.model_dump(),
+        }
+
         # --- Pass 1: Structured recommendation via tool_use ---
         template = self.jinja_env.get_template("recommendation.j2")
         prompt = template.render(
@@ -599,6 +611,12 @@ class ReasonerService:
         )
 
         parsed = self._extract_tool_input(response, "generate_recommendation")
+
+        # --- Compute deterministic suitability score (after Pass 1 returns scenarios) ---
+        suitability_engine = SuitabilityEngine()
+        suitability_result = suitability_engine.score(
+            client_dict, recommendation_type.value, parsed.get("scenarios")
+        )
 
         # --- Pass 2: Evidence and reasoning via Citations API ---
         reasoning_chain, evidences = await self._run_citations_pass(
@@ -632,6 +650,21 @@ class ReasonerService:
         )
         next_version = version_result.scalar()
 
+        # Append suitability factor breakdown to reasoning chain
+        reasoning_chain.append({
+            "step": len(reasoning_chain) + 1,
+            "description": "Lämplighetsbedömning (beräknad deterministiskt)",
+            "evidence_ids": [],
+            "conclusion": (
+                f"Lämplighetspoäng: {suitability_result.total_score:.2f} "
+                f"({suitability_result.grade}). "
+                + " | ".join(
+                    f"{f.name}: {f.score:.2f}" for f in suitability_result.factors
+                )
+            ),
+            "suitability_factors": [f.model_dump() for f in suitability_result.factors],
+        })
+
         recommendation = Recommendation(
             case_id=case_id,
             version=next_version,
@@ -640,7 +673,7 @@ class ReasonerService:
             reasoning_chain=reasoning_chain,
             assumptions=parsed["assumptions"],
             scenarios=parsed.get("scenarios"),
-            suitability_score=parsed.get("suitability_score"),
+            suitability_score=suitability_result.total_score,
             created_by=created_by,
         )
         self.db.add(recommendation)
@@ -682,6 +715,9 @@ class ReasonerService:
                     str(item.get("id", "")) for item in knowledge_items
                 ],
                 "evidence_count": len(evidences),
+                "suitability_score": suitability_result.total_score,
+                "suitability_grade": suitability_result.grade,
+                "rules_engine": ["pension_calculator", "eligibility", "suitability"],
             },
         )
         self.db.add(audit)

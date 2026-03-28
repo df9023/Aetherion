@@ -6,6 +6,18 @@ Generera en strukturerad pensionsrekommendation baserat på klientens situation 
 ## Klient- och ärendeinformation
 {{ context | tojson(indent=2) }}
 
+{% if context.computed %}
+## Beräknade fakta (använd dessa exakta siffror — räkna INTE om dem)
+
+### Pensionsberäkning
+{{ context.computed.pension_estimate | tojson(indent=2) }}
+
+### Behörighet
+{{ context.computed.eligibility | tojson(indent=2) }}
+
+VIKTIGT: Använd siffrorna ovan i din rekommendation. Hitta INTE PÅ egna siffror för avgifter, bidragssatser eller pensionsbelopp.
+{% endif %}
+
 ## Hämtade kunskapsartiklar
 
 Dessa artiklar ger dig bakgrund. Du behöver INTE citera dem här — evidens och citeringar hanteras i ett separat steg.
@@ -38,7 +50,8 @@ Analysera klientens situation steg för steg och producera en komplett rekommend
 - Motivera varför vissa alternativ inkluderas eller utesluts
 
 ### Steg 3 — Lämplighetsbedömning
-- Bedöm att rekommendationen passar klientens kunskapsnivå och erfarenhet
+- Lämplighetspoängen beräknas separat av systemet — du behöver INTE ange suitability_score
+- Beskriv kvalitativt att rekommendationen passar klientens kunskapsnivå och erfarenhet
 - Bekräfta att den matchar klientens ekonomiska situation
 - Verifiera att den ligger i linje med klientens investeringsmål och risktolerans
 
