@@ -4,6 +4,7 @@ from uuid import UUID
 from fastapi import APIRouter, File, HTTPException, Request, UploadFile, status
 from pydantic import BaseModel
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
 from app.api.deps import CurrentUser, DbSession, OrganizationId
 from app.config import get_settings
@@ -45,6 +46,7 @@ async def list_clients(
 ) -> list[Client]:
     result = await db.execute(
         select(Client)
+        .options(selectinload(Client.client_organization))
         .where(Client.organization_id == organization_id)
         .order_by(Client.created_at.desc())
         .offset(skip)
@@ -61,7 +63,9 @@ async def get_client(
     organization_id: OrganizationId,
 ) -> Client:
     result = await db.execute(
-        select(Client).where(
+        select(Client)
+        .options(selectinload(Client.client_organization))
+        .where(
             Client.id == client_id,
             Client.organization_id == organization_id,
         )

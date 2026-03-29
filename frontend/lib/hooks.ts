@@ -29,6 +29,8 @@ export interface ClientResponse {
   desired_retirement_age: number | null
   risk_profile: string | null
   organization_id: string
+  client_organization_id: string | null
+  client_organization_name: string | null
   created_at: string
   updated_at: string
   created_by: string
@@ -96,6 +98,28 @@ export interface KnowledgeItemResponse {
   updated_at: string
   created_by: string
   approved_by: string | null
+}
+
+export interface ClientOrganizationResponse {
+  id: string
+  organization_id: string
+  name: string
+  org_number: string | null
+  industry: string | null
+  collective_agreement: string | null
+  contact_person: string | null
+  contact_email: string | null
+  contact_phone: string | null
+  employee_count: number | null
+  notes: string | null
+  client_count: number
+  created_at: string
+  updated_at: string
+  created_by: string
+}
+
+export interface ClientOrganizationDetail extends ClientOrganizationResponse {
+  clients: ClientResponse[]
 }
 
 export interface AuditEntryResponse {
@@ -257,6 +281,14 @@ export function useCaseAudit(caseId: string) {
     queryKey: ["cases", caseId, "audit"],
     queryFn: () => apiFetch<AuditEntryResponse[]>(`/cases/${caseId}/audit`),
     enabled: !!caseId,
+  })
+}
+
+// Recent audit entries (cross-case, for dashboard)
+export function useRecentAudit(limit: number = 10) {
+  return useQuery({
+    queryKey: ["audit", "recent", limit],
+    queryFn: () => apiFetch<AuditEntryResponse[]>(`/audit/recent?limit=${limit}`),
   })
 }
 
@@ -431,6 +463,71 @@ export function useApplyExtraction(clientId: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["clients", clientId] })
       queryClient.invalidateQueries({ queryKey: ["clients"] })
+    },
+  })
+}
+
+// Client Organizations
+export function useClientOrganizations() {
+  return useQuery({
+    queryKey: ["client-organizations"],
+    queryFn: () => apiFetch<ClientOrganizationResponse[]>("/client-organizations"),
+  })
+}
+
+export function useClientOrganization(id: string) {
+  return useQuery({
+    queryKey: ["client-organizations", id],
+    queryFn: () => apiFetch<ClientOrganizationDetail>(`/client-organizations/${id}`),
+    enabled: !!id,
+  })
+}
+
+export function useCreateClientOrganization() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (data: {
+      name: string
+      org_number?: string
+      industry?: string
+      collective_agreement?: string
+      contact_person?: string
+      contact_email?: string
+      contact_phone?: string
+      employee_count?: number
+      notes?: string
+    }) =>
+      apiFetch<ClientOrganizationResponse>("/client-organizations", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["client-organizations"] })
+    },
+  })
+}
+
+export function useUpdateClientOrganization(id: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (data: {
+      name?: string
+      org_number?: string
+      industry?: string
+      collective_agreement?: string
+      contact_person?: string
+      contact_email?: string
+      contact_phone?: string
+      employee_count?: number
+      notes?: string
+    }) =>
+      apiFetch<ClientOrganizationResponse>(`/client-organizations/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify(data),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["client-organizations"] })
+      queryClient.invalidateQueries({ queryKey: ["client-organizations", id] })
     },
   })
 }

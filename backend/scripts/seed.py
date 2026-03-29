@@ -39,6 +39,7 @@ logger = logging.getLogger(__name__)
 from app.models.organization import Organization
 from app.models.user import User
 from app.models.client import Client
+from app.models.client_organization import ClientOrganization
 from app.models.case import Case
 from app.models.audit_entry import AuditEntry
 from app.models.knowledge_item import KnowledgeItem
@@ -68,6 +69,9 @@ USER_ADMIN_ID = _uuid("user.admin.eriksson.spp")
 USER_ADVISOR_ID = _uuid("user.advisor.lindqvist.spp")
 CLIENT_1_ID = _uuid("client.anna.johansson")
 CLIENT_2_ID = _uuid("client.lars.pettersson")
+CLIENT_ORG_1_ID = _uuid("client_org.mckinsey_stockholm")
+CLIENT_ORG_2_ID = _uuid("client_org.volvo_goteborg")
+CLIENT_ORG_3_ID = _uuid("client_org.scandic_hotels")
 CASE_1_ID = _uuid("case.anna.retirement")
 CASE_2_ID = _uuid("case.lars.lonvaxling")
 
@@ -437,6 +441,7 @@ async def seed() -> None:
         await db.execute(text("DELETE FROM recommendations"))
         await db.execute(text("DELETE FROM cases"))
         await db.execute(text("DELETE FROM clients"))
+        await db.execute(text("DELETE FROM client_organizations"))
         await db.execute(text("DELETE FROM knowledge_items"))
         await db.execute(text("DELETE FROM users"))
         await db.execute(text("DELETE FROM organizations"))
@@ -505,6 +510,51 @@ async def seed() -> None:
             created_by=USER_ADVISOR_ID,
         )
         db.add_all([client_1, client_2])
+        await db.flush()
+
+        print("Seeding client organizations...")
+        co_1 = ClientOrganization(
+            id=CLIENT_ORG_1_ID,
+            organization_id=ORG_ID,
+            name="McKinsey & Company Stockholm",
+            org_number="556109-9101",
+            industry="Managementkonsulting",
+            collective_agreement=CollectiveAgreement.ITP1,
+            contact_person="Lisa Bergström",
+            contact_email="lisa.bergstrom@mckinsey.com",
+            employee_count=450,
+            created_by=USER_ADVISOR_ID,
+        )
+        co_2 = ClientOrganization(
+            id=CLIENT_ORG_2_ID,
+            organization_id=ORG_ID,
+            name="Volvo Cars Göteborg",
+            org_number="556074-3089",
+            industry="Fordonsindustri",
+            collective_agreement=CollectiveAgreement.SAF_LO,
+            contact_person="Anders Nilsson",
+            contact_email="anders.nilsson@volvocars.com",
+            employee_count=12000,
+            created_by=USER_ADVISOR_ID,
+        )
+        co_3 = ClientOrganization(
+            id=CLIENT_ORG_3_ID,
+            organization_id=ORG_ID,
+            name="Scandic Hotels AB",
+            org_number="556299-1009",
+            industry="Hotell & Restaurang",
+            collective_agreement=CollectiveAgreement.OTHER,
+            contact_person="Maria Svensson",
+            contact_email="maria.svensson@scandichotels.com",
+            employee_count=3200,
+            created_by=USER_ADVISOR_ID,
+        )
+        db.add_all([co_1, co_2, co_3])
+        await db.flush()
+
+        # Link existing clients to their client organizations
+        client_1.client_organization_id = CLIENT_ORG_1_ID
+        client_2.client_organization_id = CLIENT_ORG_2_ID
         await db.flush()
 
         print("Seeding cases...")
@@ -587,6 +637,9 @@ async def seed() -> None:
         print(f"Advisor user:  {USER_ADVISOR_ID}  maria.lindqvist@spp.se")
         print(f"Client 1:      {CLIENT_1_ID}  Anna Johansson (ITP1, 45 yr)")
         print(f"Client 2:      {CLIENT_2_ID}  Lars Pettersson (ITP2, 58 yr)")
+        print(f"Client Org 1:  {CLIENT_ORG_1_ID}  McKinsey Stockholm")
+        print(f"Client Org 2:  {CLIENT_ORG_2_ID}  Volvo Göteborg")
+        print(f"Client Org 3:  {CLIENT_ORG_3_ID}  Scandic Hotels")
         print(f"Case 1:        {CASE_1_ID}  Retirement planning")
         print(f"Case 2:        {CASE_2_ID}  Löneväxling")
         print(f"Knowledge:     {len(KNOWLEDGE_ITEMS)} base items + {doc_count} document chunks")

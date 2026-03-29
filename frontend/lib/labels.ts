@@ -95,3 +95,25 @@ export const severityLabels: Record<string, string> = {
   medium: "Medel",
   low: "Låg",
 }
+
+export const agreementLabels: Record<string, string> = {
+  ITP1: "ITP1",
+  ITP2: "ITP2",
+  SAF_LO: "SAF-LO",
+  KAP_KL: "KAP-KL",
+  AKAP_KL: "AKAP-KL",
+  PA16: "PA16",
+  other: "Övrigt",
+  none: "Inget",
+}
+
+export const agreementStyles: Record<string, string> = {
+  ITP1: "bg-blue-50 text-blue-700",
+  ITP2: "bg-indigo-50 text-indigo-700",
+  SAF_LO: "bg-emerald-50 text-emerald-700",
+  KAP_KL: "bg-amber-50 text-amber-700",
+  AKAP_KL: "bg-orange-50 text-orange-700",
+  PA16: "bg-purple-50 text-purple-700",
+  other: "bg-slate-100 text-slate-600",
+  none: "bg-slate-50 text-slate-400",
+}

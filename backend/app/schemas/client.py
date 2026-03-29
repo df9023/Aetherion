@@ -21,7 +21,7 @@ class ClientBase(BaseModel):
 
 
 class ClientCreate(ClientBase):
-    pass
+    client_organization_id: Optional[UUID] = None
 
 
 class ClientUpdate(BaseModel):
@@ -34,6 +34,7 @@ class ClientUpdate(BaseModel):
     annual_income: Optional[Decimal] = None
     desired_retirement_age: Optional[int] = None
     risk_profile: Optional[RiskProfile] = None
+    client_organization_id: Optional[UUID] = None
 
 
 class ClientResponse(ClientBase):
@@ -41,6 +42,8 @@ class ClientResponse(ClientBase):
 
     id: UUID
     organization_id: UUID
+    client_organization_id: Optional[UUID] = None
+    client_organization_name: Optional[str] = None
     created_at: datetime
     updated_at: datetime
     created_by: UUID

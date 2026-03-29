@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import type { ClientResponse } from "@/lib/hooks"
 
 const riskColors: Record<string, { bg: string; text: string }> = {
@@ -22,8 +23,10 @@ export function ClientDetailsCard({ client }: ClientDetailsCardProps) {
   const riskLabels: Record<string, string> = { low: "Låg", moderate: "Medel", high: "Hög" }
   const employmentLabels: Record<string, string> = { employed: "Anställd", self_employed: "Egenföretagare", retired: "Pensionär", other: "Övrigt" }
 
-  const details: { label: string; value: string; badge?: boolean; badgeColor?: { bg: string; text: string } }[] = [
-    { label: "Arbetsgivare", value: client.employer_name ?? "—" },
+  const employerDisplay = client.client_organization_name ?? client.employer_name ?? "—"
+
+  const details: { label: string; value: string; badge?: boolean; badgeColor?: { bg: string; text: string }; link?: string }[] = [
+    { label: "Arbetsgivare", value: employerDisplay, link: client.client_organization_id ? `/organizations/${client.client_organization_id}` : undefined },
     { label: "Kollektivavtal", value: client.collective_agreement, badge: true },
     { label: "Årsinkomst", value: client.annual_income ? formatCurrency(client.annual_income) : "—" },
     {
@@ -66,6 +69,10 @@ export function ClientDetailsCard({ client }: ClientDetailsCardProps) {
               >
                 {item.value}
               </div>
+            ) : item.link ? (
+              <Link href={item.link} className="text-sm font-medium text-sky-600 hover:text-sky-700">
+                {item.value}
+              </Link>
             ) : (
               <p className="text-sm font-medium text-slate-900">{item.value}</p>
             )}

@@ -117,7 +117,18 @@ export default function ClientsPage() {
 
                       <div className="mb-3 flex items-center gap-2">
                         <Building2 className="h-4 w-4 shrink-0 text-slate-400" />
-                        <p className="truncate text-sm text-slate-600">{client.employer_name ?? "—"}</p>
+                        {client.client_organization_id ? (
+                          <span
+                            onClick={(e) => e.stopPropagation()}
+                            className="truncate text-sm text-sky-600 hover:text-sky-700"
+                          >
+                            <Link href={`/organizations/${client.client_organization_id}`}>
+                              {client.client_organization_name ?? client.employer_name ?? "—"}
+                            </Link>
+                          </span>
+                        ) : (
+                          <p className="truncate text-sm text-slate-600">{client.employer_name ?? "—"}</p>
+                        )}
                       </div>
 
                       <div className="mb-3">

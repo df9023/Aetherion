@@ -18,6 +18,12 @@ from app.schemas.knowledge_item import (
     KnowledgeItemUpdate,
     KnowledgeItemResponse,
 )
+from app.schemas.client_organization import (
+    ClientOrganizationCreate,
+    ClientOrganizationUpdate,
+    ClientOrganizationResponse,
+    ClientOrganizationDetail,
+)
 from app.schemas.document import DocumentCreate, DocumentResponse
 from app.schemas.workflow import WorkflowCreate, WorkflowUpdate, WorkflowResponse
 
@@ -44,6 +50,10 @@ __all__ = [
     "KnowledgeItemCreate",
     "KnowledgeItemUpdate",
     "KnowledgeItemResponse",
+    "ClientOrganizationCreate",
+    "ClientOrganizationUpdate",
+    "ClientOrganizationResponse",
+    "ClientOrganizationDetail",
     "DocumentCreate",
     "DocumentResponse",
     "WorkflowCreate",

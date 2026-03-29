@@ -2,19 +2,22 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Briefcase, Users, BookOpen, LogOut } from "lucide-react"
+import { LayoutDashboard, Briefcase, Users, Building2, BookOpen, LogOut } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useCases, useClients, useKnowledge } from "@/lib/hooks"
+import { useCases, useClients, useClientOrganizations, useKnowledge } from "@/lib/hooks"
 
 export function Sidebar() {
   const pathname = usePathname()
   const { data: cases } = useCases()
   const { data: clients } = useClients()
+  const { data: clientOrgs } = useClientOrganizations()
   const { data: knowledge } = useKnowledge()
 
   const navItems = [
+    { href: "/dashboard", icon: LayoutDashboard, label: "Översikt" },
     { href: "/cases", icon: Briefcase, label: "Ärenden", badge: cases?.filter((c) => c.status !== "archived").length },
     { href: "/clients", icon: Users, label: "Klienter", badge: clients?.length },
+    { href: "/organizations", icon: Building2, label: "Organisationer", badge: clientOrgs?.length },
     { href: "/knowledge", icon: BookOpen, label: "Kunskapsbas", badge: knowledge?.length },
   ]
 
