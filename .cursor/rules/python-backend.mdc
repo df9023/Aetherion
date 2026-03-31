@@ -1,0 +1,31 @@
+---
+description: Python backend conventions for FastAPI services
+globs: backend/**/*.py
+alwaysApply: false
+---
+
+# Python Backend
+
+- Type hints everywhere, Pydantic for all schemas
+- Async functions for all API endpoints
+- Service layer: routes → services → database (no business logic in handlers)
+- Dependency injection via `Depends()`
+- All queries scoped by `organization_id` (multi-tenancy)
+- Alembic for all schema changes
+- LLM prompts in `backend/app/prompts/` as Jinja2 — never hardcode
+- All LLM outputs parsed into Pydantic models
+- Every state change creates an `AuditEntry`
+
+```python
+# ❌ BAD — business logic in route
+@router.post("")
+async def create(data: CreateSchema, db: DbSession):
+    result = SomeModel(**data.model_dump())
+    db.add(result)
+    return result
+
+# ✅ GOOD — route delegates to service, scoped by org
+@router.post("")
+async def create(data: CreateSchema, db: DbSession, org_id: OrganizationId):
+    return await some_service.create(db, org_id, data)
+```

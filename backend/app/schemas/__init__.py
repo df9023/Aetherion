@@ -10,6 +10,9 @@ from app.schemas.recommendation import (
     RecommendationCreate,
     RecommendationUpdate,
     RecommendationResponse,
+    AnnotateStepRequest,
+    ReviewReasoningRequest,
+    ReasoningMetadata,
 )
 from app.schemas.evidence import EvidenceCreate, EvidenceResponse
 from app.schemas.audit_entry import AuditEntryCreate, AuditEntryResponse
@@ -43,6 +46,9 @@ __all__ = [
     "RecommendationCreate",
     "RecommendationUpdate",
     "RecommendationResponse",
+    "AnnotateStepRequest",
+    "ReviewReasoningRequest",
+    "ReasoningMetadata",
     "EvidenceCreate",
     "EvidenceResponse",
     "AuditEntryCreate",

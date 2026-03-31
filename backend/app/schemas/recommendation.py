@@ -8,11 +8,22 @@ from pydantic import BaseModel, ConfigDict
 from app.models.base import RecommendationType, RecommendationStatus
 
 
+class CitedText(BaseModel):
+    text: str
+    source_title: Optional[str] = None
+    knowledge_item_id: Optional[str] = None
+
+
 class ReasoningStep(BaseModel):
     step: int
+    title: Optional[str] = None
     description: str
     evidence_ids: list[UUID] = []
+    cited_texts: list[CitedText] = []
     conclusion: str
+    advisor_annotation: Optional[str] = None
+    annotated_by: Optional[UUID] = None
+    annotated_at: Optional[datetime] = None
 
 
 class Assumption(BaseModel):
@@ -54,6 +65,21 @@ class RecommendationUpdate(BaseModel):
     status: Optional[RecommendationStatus] = None
 
 
+class ReasoningMetadata(BaseModel):
+    review_status: str = "pending"  # "pending" | "reviewed"
+    reviewed_by: Optional[UUID] = None
+    reviewed_at: Optional[datetime] = None
+    review_comment: Optional[str] = None
+
+
+class AnnotateStepRequest(BaseModel):
+    advisor_annotation: str
+
+
+class ReviewReasoningRequest(BaseModel):
+    comment: Optional[str] = None
+
+
 class RecommendationResponse(RecommendationBase):
     model_config = ConfigDict(from_attributes=True)
 
@@ -61,6 +87,7 @@ class RecommendationResponse(RecommendationBase):
     case_id: UUID
     version: int
     status: RecommendationStatus
+    reasoning_metadata: Optional[dict[str, Any]] = None
     created_at: datetime
     created_by: UUID
     approved_by: Optional[UUID]

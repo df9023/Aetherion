@@ -89,6 +89,8 @@ class AuditAction(str, enum.Enum):
     CASE_ASSIGNED = "case_assigned"
     RECOMMENDATION_GENERATED = "recommendation_generated"
     RECOMMENDATION_EDITED = "recommendation_edited"
+    REASONING_ANNOTATED = "reasoning_annotated"
+    REASONING_REVIEWED = "reasoning_reviewed"
     RECOMMENDATION_REVIEWED = "recommendation_reviewed"
     RECOMMENDATION_APPROVED = "recommendation_approved"
     RECOMMENDATION_REJECTED = "recommendation_rejected"

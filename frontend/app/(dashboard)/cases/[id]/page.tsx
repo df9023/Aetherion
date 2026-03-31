@@ -14,6 +14,8 @@ import {
   useGenerateDocument,
   useKnowledgeSearch,
   useUpdateCase,
+  useAnnotateReasoningStep,
+  useReviewReasoning,
   downloadDocument,
 } from "@/lib/hooks"
 import type { DocumentResponse, MeetingBriefResponse } from "@/lib/hooks"
@@ -45,6 +47,8 @@ export default function CaseDetailPage({ params }: { params: Promise<{ id: strin
   const generateRec = useGenerateRecommendation(id)
   const generateBrief = useGenerateMeetingBrief(id)
   const generateDoc = useGenerateDocument(recommendation?.id)
+  const annotateStep = useAnnotateReasoningStep(recommendation?.id, id)
+  const reviewReasoning = useReviewReasoning(recommendation?.id, id)
   const updateCase = useUpdateCase(id)
 
   const [meetingBrief, setMeetingBrief] = useState<MeetingBriefResponse | null>(null)
@@ -89,6 +93,29 @@ export default function CaseDetailPage({ params }: { params: Promise<{ id: strin
       downloadDocument(generatedDoc.id, `${generatedDoc.title}.${generatedDoc.file_format}`)
     }
   }, [generatedDoc])
+
+  const handleAnnotateStep = useCallback(
+    (step: number, annotation: string) => {
+      annotateStep.mutate(
+        { step, annotation },
+        {
+          onSuccess: () => toast.success("Kommentar sparad"),
+          onError: (err) => toast.error(err.message),
+        }
+      )
+    },
+    [annotateStep]
+  )
+
+  const handleReviewReasoning = useCallback(
+    (comment?: string) => {
+      reviewReasoning.mutate(comment, {
+        onSuccess: () => toast.success("Resonemangskedja markerad som granskad"),
+        onError: (err) => toast.error(err.message),
+      })
+    },
+    [reviewReasoning]
+  )
 
   const handleStatusChange = useCallback(
     (status: string) => {
@@ -158,6 +185,10 @@ export default function CaseDetailPage({ params }: { params: Promise<{ id: strin
             generateDocPending={generateDoc.isPending}
             additionalContext={additionalContext}
             onAdditionalContextChange={setAdditionalContext}
+            onAnnotateStep={handleAnnotateStep}
+            onReviewReasoning={handleReviewReasoning}
+            annotationPending={annotateStep.isPending}
+            reviewPending={reviewReasoning.isPending}
           />
         </div>
 

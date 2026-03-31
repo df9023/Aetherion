@@ -36,17 +36,37 @@ export interface ClientResponse {
   created_by: string
 }
 
+export interface CitedText {
+  text: string
+  source_title: string | null
+  knowledge_item_id: string | null
+}
+
+export interface ReasoningStep {
+  step: number
+  title: string | null
+  description: string
+  evidence_ids: string[]
+  cited_texts: CitedText[]
+  conclusion: string
+  advisor_annotation: string | null
+  annotated_by: string | null
+  annotated_at: string | null
+}
+
+export interface ReasoningMetadata {
+  review_status: "pending" | "reviewed"
+  reviewed_by: string | null
+  reviewed_at: string | null
+  review_comment: string | null
+}
+
 export interface RecommendationResponse {
   id: string
   case_id: string
   recommendation_type: string
   summary: string
-  reasoning_chain: {
-    step: number
-    description: string
-    evidence_ids: string[]
-    conclusion: string
-  }[]
+  reasoning_chain: ReasoningStep[]
   assumptions: {
     assumption: string
     basis: string
@@ -58,6 +78,7 @@ export interface RecommendationResponse {
     projected_outcome: Record<string, string>
   }[] | null
   suitability_score: string | null
+  reasoning_metadata: ReasoningMetadata | null
   version: number
   status: string
   created_at: string
@@ -310,6 +331,44 @@ export function useKnowledge() {
   return useQuery({
     queryKey: ["knowledge"],
     queryFn: () => apiFetch<KnowledgeItemResponse[]>("/knowledge"),
+  })
+}
+
+// Annotate reasoning step
+export function useAnnotateReasoningStep(recommendationId: string | undefined, caseId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ step, annotation }: { step: number; annotation: string }) =>
+      apiFetch<RecommendationResponse>(
+        `/recommendations/${recommendationId}/reasoning/${step}/annotate`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({ advisor_annotation: annotation }),
+        }
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["cases", caseId, "recommendations"] })
+      queryClient.invalidateQueries({ queryKey: ["cases", caseId, "audit"] })
+    },
+  })
+}
+
+// Review reasoning trail
+export function useReviewReasoning(recommendationId: string | undefined, caseId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (comment?: string) =>
+      apiFetch<RecommendationResponse>(
+        `/recommendations/${recommendationId}/reasoning/review`,
+        {
+          method: "POST",
+          body: JSON.stringify({ comment: comment || null }),
+        }
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["cases", caseId, "recommendations"] })
+      queryClient.invalidateQueries({ queryKey: ["cases", caseId, "audit"] })
+    },
   })
 }
 

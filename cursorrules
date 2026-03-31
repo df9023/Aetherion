@@ -1,130 +1,146 @@
-# Aetherion — Cursor Rules
+# Aetherion (Drident) — Cursor Rules
 
-## Project Overview
-Aetherion (RetirementOS) — AI operating system for retirement and pension decisions in regulated financial institutions. Starting with Swedish occupational pension advisory workflows.
+## Product Vision
+
+AI-native decision workspace for regulated financial advisory firms. Advisors manage cases, generate compliance-ready recommendations with verified citations, and produce IDD-compliant documentation — with AI handling the heavy lifting and deterministic code handling the math.
+
+Starting market: Swedish occupational pension advisory. Expanding to: life insurance, wealth management, benefits consulting.
+
+## Architecture
+
+Monolithic FastAPI backend + Next.js 14 frontend. PostgreSQL + pgvector. Multi-tenant (org-scoped). Enterprise-grade: PII encryption, audit trails, configurable LLM endpoints.
 
 ## Tech Stack
-- **Backend:** Python 3.11+ / FastAPI
-- **Frontend (prototype):** v0.dev (Vercel) — full Workbench UI prototyped here first
-- **Frontend (production):** Next.js 14+ (App Router) / React / TypeScript — migrated from v0
-- **Database:** PostgreSQL + pgvector
-- **UI:** shadcn/ui + Tailwind CSS (v0 uses these by default)
-- **Auth:** WorkOS
-- **LLM:** Anthropic Claude API
-- **Doc generation:** python-docx, WeasyPrint, Jinja2
-- **Infra:** Docker, Azure
 
-## Frontend Strategy
-The Workbench UI is being prototyped in v0.dev, then migrated into the repo. This means:
-- Backend API design is the priority — make endpoints clean and well-documented so v0 can consume them
-- When working on backend, always define clear Pydantic response schemas (these become the API contract for the frontend)
-- The frontend/ directory will be populated when we migrate from v0
-- For now, Cursor focus is on backend code, API endpoints, and database work
+- **Backend:** Python 3.11+ / FastAPI / SQLAlchemy (async) / Alembic
+- **Frontend:** Next.js 14 (App Router) / React / TypeScript / shadcn/ui (New York) / Tailwind CSS
+- **Database:** PostgreSQL 16 + pgvector
+- **LLM:** Anthropic Claude API — two-pass: tool_use (structured output) + Citations API (verified evidence)
+- **Embeddings:** Voyage AI (primary), OpenAI (fallback), hash-based (dev). Planned: local HuggingFace (KBLab Swedish model)
+- **Auth:** WorkOS (backend integrated), dev bypass via X-Dev-User-Id / X-Dev-Org-Id headers
+- **Doc generation:** python-docx, WeasyPrint, Jinja2
+- **PDF extraction:** pdfplumber
+- **Testing:** pytest + pytest-asyncio + httpx (177+ tests)
+- **Infra:** Docker Compose (dev), Azure EU-region (prod, planned)
 
 ## Project Structure
+
 ```
 aetherion/
 ├── backend/
 │   ├── app/
-│   │   ├── main.py              # FastAPI app entry
-│   │   ├── api/                 # Route handlers
-│   │   │   ├── cases.py
-│   │   │   ├── recommendations.py
-│   │   │   ├── compliance.py
-│   │   │   ├── knowledge.py
-│   │   │   └── workflows.py
-│   │   ├── core/                # Config, security, dependencies
-│   │   ├── models/              # SQLAlchemy / Pydantic models
-│   │   ├── services/            # Business logic
-│   │   │   ├── reasoner.py      # LLM reasoning engine
-│   │   │   ├── memory.py        # RAG / knowledge retrieval
-│   │   │   ├── control.py       # Compliance checks
-│   │   │   ├── flow.py          # Workflow orchestration
-│   │   │   └── docgen.py        # Document generation
-│   │   ├── prompts/             # LLM prompt templates
-│   │   └── db/                  # Database migrations, session
-│   ├── tests/
+│   │   ├── main.py
+│   │   ├── api/v1/endpoints/       # Route handlers (cases, clients, recommendations, knowledge, client_organizations, dashboard, documents, auth, health)
+│   │   ├── models/                 # SQLAlchemy models (Organization, User, Client, ClientOrganization, Case, Recommendation, Evidence, AuditEntry, KnowledgeItem, Document, Workflow)
+│   │   ├── schemas/                # Pydantic request/response schemas
+│   │   ├── services/               # Business logic
+│   │   │   ├── reasoner.py         # Two-pass LLM recommendation engine
+│   │   │   ├── memory.py           # RAG: embedding, chunking, retrieval
+│   │   │   ├── control.py          # Compliance checks
+│   │   │   ├── document.py         # IDD-compliant doc generation (DOCX/PDF)
+│   │   │   ├── flow.py             # Workflow orchestration
+│   │   │   ├── suitability.py      # Deterministic suitability scoring
+│   │   │   ├── pension_calculator.py # Deterministic Swedish pension math
+│   │   │   └── eligibility.py      # Deterministic eligibility checks
+│   │   ├── prompts/                # Jinja2 LLM prompt templates
+│   │   └── utils/                  # Encryption, helpers
+│   ├── data/knowledge/             # PDF/TXT docs + .meta.json sidecars
+│   ├── scripts/seed.py             # Dev data seeding
+│   ├── tests/                      # pytest suite (unit + API + integration)
+│   ├── alembic/                    # Database migrations
 │   └── requirements.txt
 ├── frontend/
-│   ├── src/
-│   │   ├── app/                 # Next.js App Router pages
-│   │   ├── components/          # React components
-│   │   │   ├── ui/              # shadcn/ui components
-│   │   │   ├── workbench/       # Case workspace components
-│   │   │   ├── reasoner/        # Reasoning display components
-│   │   │   └── common/          # Shared components
-│   │   ├── lib/                 # Utilities, API client, hooks
-│   │   ├── types/               # TypeScript type definitions
-│   │   └── styles/              # Global styles
-│   ├── public/
+│   ├── app/(dashboard)/            # Pages: dashboard, cases, clients, organizations, knowledge
+│   ├── components/                 # React components (sidebar, cards, dialogs)
+│   ├── lib/                        # API client, hooks, labels, auth
 │   └── package.json
 ├── docker-compose.yml
-├── .env.example
-└── docs/                        # Architecture decision records
+├── docs/                           # Architecture decisions, domain model, specs
+└── drident.md                      # Product description
 ```
+
+## Core Features Built
+
+- **Case management** — full lifecycle (draft → review → approval → completed)
+- **AI recommendations** — two-pass with native citations (verbatim, API-verified)
+- **Deterministic engine** — pension calculations, suitability scoring, eligibility checks (code, not LLM)
+- **Knowledge base** — RAG with document ingestion, chunking, semantic search
+- **Client organizations** — employer companies with employees, agreements, contacts
+- **Meeting preparation** — one-click AI-generated meeting briefs
+- **Document generation** — IDD-compliant recommendation packs (PDF + DOCX)
+- **Audit trail** — immutable logging of every state change
+- **Dashboard** — advisor overview with metrics, activity, upcoming meetings
+- **Multi-tenancy** — org-scoped data isolation throughout
 
 ## Coding Conventions
 
 ### Python (Backend)
-- Use type hints everywhere
+- Type hints everywhere
 - Pydantic models for all request/response schemas
 - Async functions for all API endpoints
 - Service layer pattern: routes → services → database
 - Never put business logic in route handlers
-- Use dependency injection via FastAPI Depends()
-- Logging with structlog
-- All database queries through SQLAlchemy async sessions
-- Alembic for migrations
+- Dependency injection via FastAPI Depends()
+- All database queries scoped by organization_id (multi-tenancy)
+- Alembic for all schema changes
 
 ### TypeScript (Frontend)
 - Strict TypeScript — no `any` types
-- Functional components only, no class components
-- Custom hooks for shared logic (prefix with `use`)
-- Colocate component files: Component.tsx, Component.test.tsx
-- Use React Query (TanStack Query) for server state
-- Zustand for client state (only if needed)
-- Import shadcn/ui components from @/components/ui/
+- Functional components only
+- React Query (TanStack Query) for all server state
+- Custom hooks in `lib/hooks.ts` for API interactions
+- UI labels centralized in `lib/labels.ts` (all Swedish)
+- shadcn/ui components from `@/components/ui/`
+- All user-facing text in Swedish
 
 ### Naming
 - **Python:** snake_case for functions/variables, PascalCase for classes
 - **TypeScript:** camelCase for functions/variables, PascalCase for components/types
-- **API routes:** /api/v1/{resource} (plural nouns)
-- **Database tables:** snake_case, plural (cases, recommendations, audit_entries)
-- **Files:** snake_case.py for Python, PascalCase.tsx for React components
+- **API routes:** /api/v1/{resource} (plural nouns, kebab-case for multi-word)
+- **Database tables:** snake_case, plural
+- **Files:** snake_case.py for Python, kebab-case.tsx for React components
 
 ### Domain Terminology
-Use these terms consistently across the codebase:
-- `case` — a pension advisory case (not "ticket" or "request")
-- `recommendation` — the output of the Reasoner (not "suggestion" or "response")
-- `evidence` — supporting sources for a recommendation (not "references")
-- `audit_entry` — compliance trail record (not "log")
-- `knowledge_item` — a piece of institutional knowledge in Memory
-- `workflow` — a Flow orchestration sequence
-- `suitability_assessment` — compliance check on a recommendation
+Use consistently across backend, frontend, docs, and prompts:
+- `case` (not ticket/request)
+- `recommendation` (not suggestion/response)
+- `evidence` (not reference)
+- `audit_entry` (not log)
+- `knowledge_item` (not document/chunk)
+- `client_organization` (the employer company, not the advisory firm)
+- `organization` (the advisory firm / tenant)
+- `suitability_assessment` (not compliance check)
+- `meeting_brief` (not prep/summary)
 
 ### LLM Integration
-- All prompts live in backend/app/prompts/ as Jinja2 templates
-- Never hardcode prompts in service files
-- Always include system prompts with compliance guardrails
-- Log all LLM inputs/outputs for audit trail
-- Use structured output parsing (Pydantic models) for LLM responses
+- All prompts in `backend/app/prompts/` as Jinja2 templates — never hardcode
+- Two-pass architecture: Pass 1 (tool_use) for structured data, Pass 2 (Citations API) for verified evidence
+- Deterministic services compute all numbers (pension, suitability, eligibility) — LLM explains, doesn't calculate
+- All LLM outputs parsed into Pydantic models
+- Log all LLM interactions for audit trail
 - Handle LLM errors gracefully with fallback messaging
 
 ### Security & Compliance
 - Never log PII in plaintext
-- All client data encrypted at rest
-- Audit trail for every case modification
-- Role-based access control via WorkOS
-- All API endpoints require authentication (except health check)
-- GDPR-compliant data handling patterns
+- PII fields use EncryptedString (Fernet) at rest
+- Audit trail for every case/recommendation state change
+- All API endpoints require authentication (except health)
+- Multi-tenant isolation: org A never sees org B's data (returns 404, not 403)
+- Rate limiting on LLM endpoints (slowapi)
+- GDPR-compliant data handling
+- EU AI Act: human-in-the-loop decision support, not autonomous
+
+### Testing
+- pytest + pytest-asyncio for backend
+- Pure unit tests for deterministic services (no DB, no async)
+- API integration tests with httpx AsyncClient (auth override via headers)
+- Multi-tenancy isolation tests for every endpoint
+- Factory helpers in `tests/factories.py`
+- Mock LLM calls — never hit real API in tests
+- All tests run in < 5 seconds
 
 ### Git
 - Conventional commits: feat:, fix:, docs:, refactor:, test:, chore:
 - Branch naming: feature/, fix/, docs/ prefix
-- PR descriptions must reference the module affected (Workbench, Reasoner, Control, Memory, Flow)
-
-### Testing
-- pytest for backend, Vitest for frontend
-- Test services, not route handlers
-- Mock LLM calls in tests (don't call real API)
-- Integration tests for database operations
+- Never commit .env, credentials, API keys, or PII
+- PDF/TXT knowledge documents gitignored (only .meta.json tracked)

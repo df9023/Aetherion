@@ -426,6 +426,14 @@ class ReasonerService:
             })
         return blocks
 
+    # IDD suitability phase titles assigned to reasoning steps in order
+    IDD_STEP_TITLES = [
+        "Behovsanalys",
+        "Kunskapsbedömning",
+        "Marknadsanalys",
+        "Lämplighetsbedömning",
+    ]
+
     def _parse_citations_response(
         self,
         response,
@@ -453,6 +461,7 @@ class ReasonerService:
 
             # Each text block with citations becomes a reasoning step
             evidence_ids_for_step: list[str] = []
+            cited_texts_for_step: list[dict] = []
 
             for cit in citations:
                 cited_text = getattr(cit, "cited_text", "") or ""
@@ -477,14 +486,23 @@ class ReasonerService:
                 # Resolve knowledge item from document_index
                 ki_id = ""
                 source_ref = ""
+                source_title = ""
                 category = "expert_knowledge"
                 if doc_idx < len(knowledge_items):
                     ki = knowledge_items[doc_idx]
                     ki_id = str(ki.get("id", ""))
                     source_ref = ki_id
+                    source_title = ki.get("title", "")
                     category = ki.get("category", "product_rule")
                     if ki_id and ki_id not in evidence_ids_for_step:
                         evidence_ids_for_step.append(ki_id)
+
+                # Build cited_text entry for the reasoning step
+                cited_texts_for_step.append({
+                    "text": cited_text,
+                    "source_title": source_title or None,
+                    "knowledge_item_id": ki_id or None,
+                })
 
                 # Map knowledge category to EvidenceSourceType
                 source_type = _category_to_source_type(category)
@@ -507,10 +525,18 @@ class ReasonerService:
             # Build reasoning step from this text block
             if text:
                 step_num += 1
+                # Assign IDD phase title based on step position
+                title = (
+                    self.IDD_STEP_TITLES[step_num - 1]
+                    if step_num <= len(self.IDD_STEP_TITLES)
+                    else None
+                )
                 reasoning_steps.append({
                     "step": step_num,
+                    "title": title,
                     "description": text,
                     "evidence_ids": evidence_ids_for_step,
+                    "cited_texts": cited_texts_for_step,
                     "conclusion": "",
                 })
 
@@ -630,15 +656,19 @@ class ReasonerService:
         if parsed.get("cost_disclosure"):
             reasoning_chain.append({
                 "step": len(reasoning_chain) + 1,
+                "title": "Kostnadsinformation",
                 "description": "Kostnadsinformation (IDD-krav)",
                 "evidence_ids": [],
+                "cited_texts": [],
                 "conclusion": parsed["cost_disclosure"],
             })
         if parsed.get("conflict_disclosure"):
             reasoning_chain.append({
                 "step": len(reasoning_chain) + 1,
+                "title": "Intressekonflikter",
                 "description": "Intressekonfliktdisklosur (IDD-krav)",
                 "evidence_ids": [],
+                "cited_texts": [],
                 "conclusion": parsed["conflict_disclosure"],
             })
 
@@ -653,8 +683,10 @@ class ReasonerService:
         # Append suitability factor breakdown to reasoning chain
         reasoning_chain.append({
             "step": len(reasoning_chain) + 1,
+            "title": "Lämplighetsbedömning",
             "description": "Lämplighetsbedömning (beräknad deterministiskt)",
             "evidence_ids": [],
+            "cited_texts": [],
             "conclusion": (
                 f"Lämplighetspoäng: {suitability_result.total_score:.2f} "
                 f"({suitability_result.grade}). "
@@ -674,6 +706,7 @@ class ReasonerService:
             assumptions=parsed["assumptions"],
             scenarios=parsed.get("scenarios"),
             suitability_score=suitability_result.total_score,
+            reasoning_metadata={"review_status": "pending"},
             created_by=created_by,
         )
         self.db.add(recommendation)
@@ -782,15 +815,19 @@ class ReasonerService:
         if parsed.get("cost_disclosure"):
             reasoning_chain.append({
                 "step": len(reasoning_chain) + 1,
+                "title": "Kostnadsinformation",
                 "description": "Kostnadsinformation (IDD-krav)",
                 "evidence_ids": [],
+                "cited_texts": [],
                 "conclusion": parsed["cost_disclosure"],
             })
         if parsed.get("conflict_disclosure"):
             reasoning_chain.append({
                 "step": len(reasoning_chain) + 1,
+                "title": "Intressekonflikter",
                 "description": "Intressekonfliktdisklosur (IDD-krav)",
                 "evidence_ids": [],
+                "cited_texts": [],
                 "conclusion": parsed["conflict_disclosure"],
             })
 
@@ -803,6 +840,7 @@ class ReasonerService:
             assumptions=parsed["assumptions"],
             scenarios=parsed.get("scenarios"),
             suitability_score=parsed.get("suitability_score"),
+            reasoning_metadata={"review_status": "pending"},
             created_by=user_id,
         )
         self.db.add(new_recommendation)
