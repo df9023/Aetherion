@@ -121,6 +121,27 @@ export interface KnowledgeItemResponse {
   approved_by: string | null
 }
 
+export interface FirmInsightResponse {
+  id: string
+  organization_id: string
+  title: string
+  content: string
+  category: string
+  case_types: string[]
+  collective_agreements: string[]
+  client_organization_id: string | null
+  client_organization_name: string | null
+  tags: string[]
+  source_case_id: string | null
+  source_case_title: string | null
+  is_active: boolean
+  upvotes: number
+  created_by: string
+  creator_name: string | null
+  created_at: string
+  updated_at: string
+}
+
 export interface ClientOrganizationResponse {
   id: string
   organization_id: string
@@ -587,6 +608,102 @@ export function useUpdateClientOrganization(id: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["client-organizations"] })
       queryClient.invalidateQueries({ queryKey: ["client-organizations", id] })
+    },
+  })
+}
+
+// Firm Insights
+export function useFirmInsights(filters?: Record<string, string>) {
+  const params = new URLSearchParams()
+  if (filters) {
+    for (const [key, value] of Object.entries(filters)) {
+      if (value) params.set(key, value)
+    }
+  }
+  const qs = params.toString()
+  return useQuery({
+    queryKey: ["firm-insights", filters ?? {}],
+    queryFn: () =>
+      apiFetch<FirmInsightResponse[]>(
+        qs ? `/firm-insights?${qs}` : "/firm-insights",
+      ),
+  })
+}
+
+export function useFirmInsight(id: string | undefined) {
+  return useQuery({
+    queryKey: ["firm-insights", id],
+    queryFn: () => apiFetch<FirmInsightResponse>(`/firm-insights/${id}`),
+    enabled: !!id,
+  })
+}
+
+export function useRelevantInsights(caseId: string) {
+  return useQuery({
+    queryKey: ["firm-insights", "relevant", caseId],
+    queryFn: () =>
+      apiFetch<FirmInsightResponse[]>(
+        `/firm-insights/relevant?case_id=${caseId}`,
+      ),
+    enabled: !!caseId,
+  })
+}
+
+export interface FirmInsightCreateInput {
+  title: string
+  content: string
+  category: string
+  case_types?: string[]
+  collective_agreements?: string[]
+  client_organization_id?: string | null
+  tags?: string[]
+  source_case_id?: string | null
+}
+
+export function useCreateFirmInsight() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (data: FirmInsightCreateInput) =>
+      apiFetch<FirmInsightResponse>("/firm-insights", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["firm-insights"] })
+      if (data.source_case_id) {
+        queryClient.invalidateQueries({
+          queryKey: ["firm-insights", "relevant", data.source_case_id],
+        })
+        queryClient.invalidateQueries({
+          queryKey: ["cases", data.source_case_id, "audit"],
+        })
+      }
+    },
+  })
+}
+
+export function useUpvoteFirmInsight() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (insightId: string) =>
+      apiFetch<FirmInsightResponse>(`/firm-insights/${insightId}/upvote`, {
+        method: "POST",
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["firm-insights"] })
+    },
+  })
+}
+
+export function useDeleteFirmInsight() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (insightId: string) =>
+      apiFetch<void>(`/firm-insights/${insightId}`, {
+        method: "DELETE",
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["firm-insights"] })
     },
   })
 }

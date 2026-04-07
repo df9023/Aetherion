@@ -29,6 +29,11 @@ from app.schemas.client_organization import (
 )
 from app.schemas.document import DocumentCreate, DocumentResponse
 from app.schemas.workflow import WorkflowCreate, WorkflowUpdate, WorkflowResponse
+from app.schemas.firm_insight import (
+    FirmInsightCreate,
+    FirmInsightUpdate,
+    FirmInsightResponse,
+)
 
 __all__ = [
     "OrganizationCreate",
@@ -65,4 +70,7 @@ __all__ = [
     "WorkflowCreate",
     "WorkflowUpdate",
     "WorkflowResponse",
+    "FirmInsightCreate",
+    "FirmInsightUpdate",
+    "FirmInsightResponse",
 ]

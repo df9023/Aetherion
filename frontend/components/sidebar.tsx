@@ -2,9 +2,9 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, Briefcase, Users, Building2, BookOpen, LogOut } from "lucide-react"
+import { LayoutDashboard, Briefcase, Users, Building2, BookOpen, Lightbulb, LogOut } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useCases, useClients, useClientOrganizations, useKnowledge } from "@/lib/hooks"
+import { useCases, useClients, useClientOrganizations, useKnowledge, useFirmInsights } from "@/lib/hooks"
 
 export function Sidebar() {
   const pathname = usePathname()
@@ -12,6 +12,7 @@ export function Sidebar() {
   const { data: clients } = useClients()
   const { data: clientOrgs } = useClientOrganizations()
   const { data: knowledge } = useKnowledge()
+  const { data: insights } = useFirmInsights()
 
   const navItems = [
     { href: "/dashboard", icon: LayoutDashboard, label: "Översikt" },
@@ -19,6 +20,7 @@ export function Sidebar() {
     { href: "/clients", icon: Users, label: "Klienter", badge: clients?.length },
     { href: "/organizations", icon: Building2, label: "Organisationer", badge: clientOrgs?.length },
     { href: "/knowledge", icon: BookOpen, label: "Kunskapsbas", badge: knowledge?.length },
+    { href: "/insights", icon: Lightbulb, label: "Insikter", badge: insights?.length },
   ]
 
   return (

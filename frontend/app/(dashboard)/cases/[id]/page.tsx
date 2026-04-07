@@ -26,6 +26,9 @@ import { ClientInfoCard } from "@/components/client-info-card"
 import { AIRecommendationCard } from "@/components/ai-recommendation-card"
 import { KnowledgeBaseCard } from "@/components/knowledge-base-card"
 import { AuditTrailCard } from "@/components/audit-trail-card"
+import { FirmInsightsCard } from "@/components/firm-insights-card"
+import { FirmInsightDialog } from "@/components/firm-insight-dialog"
+import { Lightbulb } from "lucide-react"
 
 function useDebounced(value: string, delay: number) {
   const [debounced, setDebounced] = useState(value)
@@ -58,6 +61,7 @@ export default function CaseDetailPage({ params }: { params: Promise<{ id: strin
   const { data: knowledgeResults } = useKnowledgeSearch(debouncedQuery)
 
   const [generatedDoc, setGeneratedDoc] = useState<DocumentResponse | null>(null)
+  const [showInsightDialog, setShowInsightDialog] = useState(false)
 
   const handleGenerate = useCallback(() => {
     generateRec.mutate(additionalContext || undefined, {
@@ -171,6 +175,22 @@ export default function CaseDetailPage({ params }: { params: Promise<{ id: strin
       <main className="flex flex-1 flex-col gap-5 px-6 py-6 lg:flex-row">
         {/* Left column */}
         <div className="flex min-w-0 flex-1 flex-col gap-5">
+          {caseData.status === "completed" && (
+            <div className="flex items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-5 py-3">
+              <div className="flex items-center gap-2">
+                <Lightbulb className="h-4 w-4 text-amber-600" />
+                <p className="text-sm text-amber-900">
+                  Har du lärdomar från detta ärende?
+                </p>
+              </div>
+              <button
+                onClick={() => setShowInsightDialog(true)}
+                className="rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-xs font-medium text-amber-800 hover:bg-amber-100"
+              >
+                Lägg till insikt
+              </button>
+            </div>
+          )}
           <CaseHeaderCard caseData={caseData} onStatusChange={handleStatusChange} />
           <MeetingPrepCard brief={meetingBrief} isPending={generateBrief.isPending} onGenerate={handleGenerateBrief} />
           <ClientInfoCard client={client} isLoading={clientLoading} />
@@ -195,9 +215,31 @@ export default function CaseDetailPage({ params }: { params: Promise<{ id: strin
         {/* Right panel */}
         <div className="flex w-full shrink-0 flex-col gap-5 lg:w-[380px]">
           <KnowledgeBaseCard query={knowledgeQuery} onQueryChange={setKnowledgeQuery} results={knowledgeResults} />
+          <FirmInsightsCard
+            caseId={id}
+            caseType={caseData.case_type}
+            clientCollectiveAgreement={client?.collective_agreement}
+            clientOrganizationId={client?.client_organization_id ?? null}
+          />
           <AuditTrailCard entries={audit} />
         </div>
       </main>
+
+      {showInsightDialog && (
+        <FirmInsightDialog
+          open={showInsightDialog}
+          onOpenChange={setShowInsightDialog}
+          defaultValues={{
+            source_case_id: id,
+            case_types: caseData.case_type ? [caseData.case_type] : [],
+            collective_agreements: client?.collective_agreement
+              ? [client.collective_agreement]
+              : [],
+            client_organization_id: client?.client_organization_id ?? null,
+            category: "lesson_learned",
+          }}
+        />
+      )}
     </>
   )
 }

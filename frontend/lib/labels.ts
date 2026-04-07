@@ -88,6 +88,7 @@ export const auditActionLabels: Record<string, string> = {
   document_ingested: "Dokument inhämtat av AI",
   client_data_applied: "Klientdata uppdaterad från dokument",
   knowledge_ingested: "Kunskapsdokument inhämtat",
+  insight_created: "Firmainsikt skapad",
 }
 
 export const severityLabels: Record<string, string> = {
@@ -105,6 +106,24 @@ export const agreementLabels: Record<string, string> = {
   PA16: "PA16",
   other: "Övrigt",
   none: "Inget",
+}
+
+export const firmInsightCategoryLabels: Record<string, string> = {
+  client_specific: "Klientspecifikt",
+  product_tip: "Produkttips",
+  process_note: "Processnot",
+  compliance_tip: "Regelefterlevnad",
+  lesson_learned: "Lärdom",
+  general: "Allmänt",
+}
+
+export const firmInsightCategoryStyles: Record<string, string> = {
+  client_specific: "bg-violet-50 text-violet-700 border border-violet-200",
+  product_tip: "bg-blue-50 text-blue-700 border border-blue-200",
+  process_note: "bg-emerald-50 text-emerald-700 border border-emerald-200",
+  compliance_tip: "bg-amber-50 text-amber-700 border border-amber-200",
+  lesson_learned: "bg-rose-50 text-rose-700 border border-rose-200",
+  general: "bg-slate-100 text-slate-700 border border-slate-200",
 }
 
 export const agreementStyles: Record<string, string> = {

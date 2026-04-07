@@ -1,6 +1,6 @@
-# Aetherion — TODO
+# Aetherion (Drident) — TODO
 
-> **Demo goal (SPP):** An advisor opens the Workbench, preps for a client meeting with an auto-generated brief, clicks "Generate Recommendation", gets a structured IDD-compliant recommendation with full reasoning chain, then downloads the documentation pack. The wow moment is: "I just prepped a meeting in 2 minutes instead of 45."
+> **Product vision:** AI-native decision workspace for regulated pension advisory firms. Advisors manage cases, generate compliance-ready recommendations with verified citations, and produce IDD-compliant documentation. Three differentiating capabilities: Reasoning Trail, Firm Memory, Regulatory Pulse.
 
 ---
 
@@ -68,6 +68,8 @@
 - [x] Case status transitions (dropdown with valid next states)
 - [x] React Query hooks wired to all backend endpoints
 - [x] Dev auth bypass (X-Dev-User-Id / X-Dev-Org-Id headers)
+- [x] Full Swedish UI labels throughout all pages
+- [x] UX overhaul: minimum text-xs, larger buttons, no fake elements, responsive layout
 
 ### Auth & Security
 - [x] WorkOS integration (login, callback, logout, /me)
@@ -83,11 +85,6 @@
 - [x] Evidence model updated: cited_text, document_index, start/end_char_index, knowledge_item_id FK
 - [x] Removed fuzzy CitationValidator — native citations are verified by definition
 - [x] Frontend evidence cards show cited_text blockquotes
-- [x] Migration 004_native_citations.py
-
-### Codebase Cleanup
-- [x] Removed unused prompt files
-- [x] Updated CLAUDE.md, README.md, SETUP.md, TODO.md
 
 ### Knowledge Base — Document Ingestion
 - [x] Document index created (`backend/data/knowledge/document-index.json`) with 24 Swedish pension documents
@@ -96,14 +93,84 @@
 - [x] Seed script auto-ingests PDFs with `.meta.json` sidecars (144 chunks from 9 documents)
 - [x] RAG tested end-to-end: recommendation generation with native citations works
 
-### Visual Redesign
+### Deterministic Rules Engine
+- [x] `SuitabilityEngine` — weighted rules-based scoring (risk match, age, income, agreement, data completeness)
+- [x] `PensionCalculator` — ITP1/ITP2/SAF-LO/KAP-KL/AKAP-KL/PA16 rates, IBB lookup, salary exchange math
+- [x] `EligibilityChecker` — collective agreement → provider mapping, recommendation type rules
+- [x] 126 unit tests for all three services (pure, deterministic, no DB/async)
+
+### Dashboard
+- [x] `/dashboard` page — advisor home screen
+- [x] Greeting header with time-of-day Swedish greeting + quick action buttons
+- [x] Key metrics row (active cases, awaiting review, meetings this week, completed this month)
+- [x] Cases needing attention (prioritized by urgency)
+- [x] Recent activity feed (org-wide audit trail via `GET /api/v1/audit/recent`)
+- [x] Upcoming meetings with prep status
+- [x] Monthly performance stats
+- [x] Sidebar: "Översikt" as first nav item
+
+### Client Organizations
+- [x] `ClientOrganization` model — employer companies the advisor manages (name, org number, industry, agreement, contacts)
+- [x] FK from `Client` → `ClientOrganization` (optional, backward compatible)
+- [x] Full CRUD endpoints at `/api/v1/client-organizations` with client count
+- [x] Delete protection (409 when clients linked)
+- [x] `/organizations` list page with search, create dialog, card grid
+- [x] `/organizations/[id]` detail page with employee list + org info sidebar + edit dialog
+- [x] Sidebar: "Organisationer" with Building2 icon
+- [x] Client pages link to org when linked
+- [x] Seed data: McKinsey Stockholm, Volvo Göteborg, Scandic Hotels
+- [x] 9 tests (CRUD, client count, delete protection, org isolation)
+
+### API Tests & Test Infrastructure
+- [x] Async test infrastructure: conftest.py with DB fixtures, session-scoped event loop, header-based auth
+- [x] Factory helpers in `tests/factories.py`
+- [x] 42 async API tests: health, auth, cases, clients, knowledge, recommendations, dashboard
+- [x] Multi-tenancy isolation tests (org2 can't see org1's data)
+- [x] Total: 187+ tests, all passing in ~3 seconds
+
+### Reasoning Trail (Drident Capability #1)
+- [x] ReasoningStep expanded: title (IDD phases), cited_texts, advisor_annotation, annotated_by/at
+- [x] `reasoning_metadata` JSONB column on Recommendation (total steps, annotated count, review status)
+- [x] `PATCH /{id}/reasoning/{step}/annotate` — advisor annotation endpoint with audit entry
+- [x] `POST /{id}/reasoning/review` — compliance sign-off with audit entry
+- [x] Reasoner assigns IDD phase titles (Behovsanalys, Lämplighetsbedömning, Kostnadsinformation, etc.)
+- [x] Document generation renders reasoning chain as compliance record (titles, cited blockquotes, annotations)
+- [x] Frontend: expandable reasoning steps with inline annotation, review button, compliance badge
+- [x] Backward compatible with old-format chains
+- [x] 10 tests (annotation CRUD, review, audit entries, backward compat, org isolation)
+
+### Firm Memory Phase 1 (Drident Capability #2)
+- [x] `FirmInsight` model — org-scoped advisor insights with category, case type/agreement/client org scoping
+- [x] `FirmInsightCategory` enum (client_specific, product_tip, process_note, compliance_tip, lesson_learned, general)
+- [x] Full CRUD endpoints at `/api/v1/firm-insights` with filters (category, case_type, agreement, search)
+- [x] `GET /relevant?case_id=uuid` — contextual matching: returns insights that match a case's context
+- [x] Upvote endpoint
+- [x] Frontend: "Firmans insikter" panel on case detail page with relevant insights
+- [x] Frontend: `/insights` standalone page with filters, search, card grid
+- [x] Sidebar: "Insikter" with Lightbulb icon
+- [x] Post-case completion prompt encouraging knowledge capture
+- [x] `INSIGHT_CREATED` audit action
+
+### Visual Redesign & UX
 - [x] v0 prototype generated (reference in `v0-reference/`)
-- [x] v0 visual design applied to existing frontend (data layer intact)
+- [x] v0 visual design applied to existing frontend
+- [x] Global typography overhaul (min text-xs, removed text-[10px]/[11px])
+- [x] Removed fake/non-functional elements (search bar, notification bell, hardcoded names)
+- [x] Increased button and click target sizes throughout
+- [x] Swedish labels for all UI text
+- [x] Responsive layout on case detail page
+- [x] Collapsible evidence section for progressive disclosure
 
 ### Bug Fixes
 - [x] Fixed suitability score display (was showing "0.85 / 10 Low suitability" — now shows "85% High suitability")
 - [x] Fixed document generation crash (LLM returns cost as string, DOCX formatter expected float)
 - [x] Fixed database enum mismatch for `meeting_brief_generated`, `document_ingested`, `client_data_applied` audit actions
+
+### Project Documentation
+- [x] `drident.md` — product description, capabilities, privacy/security positioning
+- [x] `drident-next-capabilities.md` — Regulatory Pulse, Reasoning Trail, Firm Memory specifications
+- [x] `.cursor/rules/` — 7 focused Cursor rules (project, backend, frontend, security, testing, LLM, prompts)
+- [x] `cursorrules` updated for enterprise SaaS vision
 
 ---
 
@@ -113,18 +180,35 @@
 - [ ] Download remaining 2 PDFs manually (PTK ITP2 guide, IDD directive from EUR-Lex)
 - [ ] Save-as-PDF from browser for remaining 13 web pages (Pensionsmyndigheten, Skatteverket, minPension, etc.)
 - [ ] Add InsureSec rules/guidelines and Lagen om försäkringsdistribution (2018:1219)
-- [ ] Switch from hash-based embeddings to Voyage AI or OpenAI for real semantic search quality
+- [ ] Switch from hash-based embeddings to local HuggingFace model (KBLab/sentence-bert-swedish-cased)
 
 ### Git Cleanup
-- [ ] Revoke leaked GitHub PAT (in `.cursor/mcp.json` git history)
+- [x] Revoked leaked GitHub PAT
 - [ ] Remove `.cursor/mcp.json` from git tracking
-- [ ] Delete stale `cursorrules` file (superseded by `CLAUDE.md`)
 - [ ] Clean up or move `Aetherion.md` to `docs/`
 - [ ] Remove `prompts/*.md` build prompts from tracking
 
 ---
 
 ## Next Up
+
+### Regulatory Pulse (Drident Capability #3)
+> When regulations change, Drident traces the impact through the firm's active cases and tells advisors exactly what's affected.
+
+- [ ] Regulatory change ingestion — new/updated knowledge items flagged as regulatory changes
+- [ ] Dependency model: regulations ↔ case facts (case_type, collective_agreement, recommendation fields)
+- [ ] Impact tracing: when a regulation changes, identify affected active cases
+- [ ] Per-case impact flags with diff (old rule vs new rule, affected recommendation sections)
+- [ ] Dashboard: "Regulatory Feed" showing recent changes with impact assessments
+- [ ] "Compliance Health" view: cases current vs. cases with unresolved impacts
+- [ ] Alerts (in-app) for high-severity changes affecting cases in review
+- [ ] Firm Memory integration: check if patterns were based on changed rules
+
+### Embeddings Upgrade
+- [ ] Replace hash-based dev embeddings with local HuggingFace model (KBLab/sentence-bert-swedish-cased or intfloat/multilingual-e5-small)
+- [ ] Add `sentence-transformers` + `torch` to requirements
+- [ ] Update MemoryService embedding logic
+- [ ] Re-embed all knowledge items
 
 ### Compliance Documentation Polish
 - [ ] Review behovsanalys section against FI expectations
@@ -135,7 +219,7 @@
 
 ### Knowledge Q&A (conversational)
 - [ ] `POST /api/v1/knowledge/ask` — question in, grounded answer + sources out
-- [ ] Frontend: Q&A chat interface in knowledge panel (augment existing search)
+- [ ] Frontend: Q&A chat interface in knowledge panel
 
 ### Auth & Security (remaining)
 - [ ] Replace dev JWT stub with real WorkOS auth flow in frontend
@@ -144,51 +228,24 @@
 
 ---
 
-## Post-Demo — Build After SPP Validation
+## Post-Demo — Build After Validation
 
 ### Product Catalog & Firm Offerings
-> Different advisory firms (SPP, Max Matthiessen, Söderberg & Partners, etc.) have different distribution agreements, product shelves, and fee structures. Recommendations must be scoped to what the firm can actually offer — not generic advice.
-
-- [ ] Domain model: `ProductOffering` entity (org-scoped) — provider, product name, category (traditional/unit-linked/hybrid), fee tiers, fund selection, transfer rules
-- [ ] Domain model: `ProviderAgreement` entity — which insurance providers (Alecta, AMF, Folksam, Skandia, etc.) the org has distribution agreements with
-- [ ] Seed data: SPP's actual product shelf as example
-- [ ] Recommendation prompt receives org's available products as context — Claude recommends *from what the firm can sell*
-- [ ] Cost disclosure (IDD section 7) uses the firm's actual fee schedule instead of generic estimates
-- [ ] Conflict of interest disclosure (IDD section 8) reflects the firm's commission structure
+- [ ] `ProductOffering` entity (org-scoped) — provider, product name, category, fee tiers, fund selection
+- [ ] `ProviderAgreement` entity — which providers the org has distribution agreements with
+- [ ] Seed data: SPP's actual product shelf
+- [ ] Recommendation prompt scoped to org's available products
+- [ ] Cost disclosure uses firm's actual fee schedule
 - [ ] Frontend: org settings page for managing product catalog
-- [ ] Frontend: recommendation shows which specific products were considered and why
 
-### Deterministic Rules Engine
-> Principle: LLM should only generate narrative. Everything that can be computed — scores, costs, rates, eligibility — must be calculated in code. Compute first, narrate second.
+### Firm Memory Phase 2 — Pattern Detection
+- [ ] Identify recurring patterns across completed cases (no individual client data)
+- [ ] Surface patterns as suggestions that advisors validate or dismiss
+- [ ] Confidence scoring — dismissed patterns fade, validated patterns strengthen
 
-**Suitability scoring (replace LLM-generated score):**
-- [ ] `SuitabilityEngine` service — weighted rules-based scoring
-- [ ] Factors: risk profile match, age appropriateness, income fit, agreement eligibility, investment horizon
-- [ ] Each factor scored 0-1 with configurable weight, combined into final score
-- [ ] Score + factor breakdown injected into LLM prompt as facts (LLM explains, doesn't score)
-
-**Pension calculations (replace LLM-invented numbers):**
-- [ ] `PensionCalculator` service — deterministic math for Swedish pension system
-- [ ] Allmän pension: income pension + premium pension estimate based on income + age
-- [ ] Tjänstepension contribution rates: ITP1 (4.5% ≤ 7.5 IBB, 30% above), SAF-LO (4.5%), AKAP-KR, PA16
-- [ ] Salary exchange: tax savings = marginal rate × exchange amount
-- [ ] Projected pension: capital × annuity factor (based on retirement age + life expectancy tables)
-- [ ] IBB (inkomstbasbelopp) lookup table, updated yearly
-
-**Cost calculations (replace LLM guesses):**
-- [ ] Calculate from Product Catalog: total fee = platform fee + fund fee + insurance fee
-- [ ] Cost impact on return: compound effect over investment horizon
-- [ ] Scenario costs: deterministic diff between current and recommended product costs
-
-**Eligibility rules:**
-- [ ] Collective agreement → eligible providers/products (lookup table)
-- [ ] Age → retirement window, early withdrawal rules
-- [ ] Income thresholds for salary exchange viability
-
-**Refactored LLM prompts:**
-- [ ] Pass 1 prompt receives computed facts: suitability score, costs, pension estimates, eligibility
-- [ ] LLM generates narrative summary, assumptions, and explanations around the facts
-- [ ] LLM does NOT produce numbers — only explains the pre-computed numbers
+### Firm Memory Phase 3 — Recommendation Integration
+- [ ] Validated firm patterns injected into recommendation prompts
+- [ ] AI reasons with regulatory knowledge + firm's accumulated judgment
 
 ### Scenario Modeling
 - [ ] Scenario comparison mode: 2-3 parameter variations, side-by-side outcomes
@@ -198,75 +255,32 @@
 - [ ] Meeting notes input (manual or transcription)
 - [ ] Auto-generate: client summary email (Swedish), internal notes, follow-up tasks
 
-### Async Tasks
-- [ ] Celery + Redis for background jobs
-- [ ] Async document/recommendation generation
-
 ### Login & Onboarding
-- [ ] Login page — polished, brand-forward landing page (WorkOS-powered auth)
+- [ ] Login page — polished, brand-forward landing page
 - [ ] First-time setup flow for new organizations
 
 ### Organization Settings Page
-- [ ] Sidebar: "Inställningar" page for the advisory firm
 - [ ] Firm profile: name, org number, logo
 - [ ] User management: invite/remove advisors, assign roles
-- [ ] Product catalog configuration (ties into Product Catalog feature above)
+- [ ] Product catalog configuration
 - [ ] Branding/preferences
 
-### Additional Sidebar Pages
-- [ ] Dashboard / overview page (key metrics, recent activity, upcoming meetings)
+### Additional Pages
 - [ ] Reports page (compliance summaries, case throughput, advisor performance)
 - [ ] Calendar / meeting schedule view
 
 ### Production Readiness
 - [ ] CI/CD via GitHub Actions (lint, test, build)
-- [ ] Azure deployment (EU-region)
+- [ ] Azure/Railway deployment (EU-region)
 - [ ] Sentry for error monitoring
 - [ ] PostHog for product analytics
-- [ ] Neon or Supabase for managed PostgreSQL
+- [ ] Managed PostgreSQL (Neon or Supabase)
 
-### Testing
-> Stack: pytest + pytest-asyncio + httpx AsyncClient. Mock all LLM calls. Test database via Docker or SQLite.
-
-**Test infrastructure:**
-- [ ] `conftest.py` — test database setup, async session fixtures, test client factory
-- [ ] `factories.py` — Factory functions for Organization, User, Client, Case, Recommendation
+### Advanced Testing
 - [ ] LLM mock fixtures — deterministic Claude API responses for all tool schemas
-- [ ] CI integration — tests run on every PR via GitHub Actions
-
-**API endpoint tests (one test file per endpoint module):**
-- [ ] `test_cases.py` — CRUD, status transitions, org isolation, invalid transitions rejected
-- [ ] `test_clients.py` — CRUD, search, org isolation, PII encryption verified
-- [ ] `test_recommendations.py` — generate, refine, evidence, document generation + download
-- [ ] `test_knowledge.py` — CRUD, search, ingest, semantic search returns results
-- [ ] `test_auth.py` — WorkOS flow, dev bypass only in debug mode, JWT validation
-- [ ] `test_health.py` — health endpoint returns 200
-
-**Service-layer unit tests:**
-- [ ] `test_reasoner.py` — two-pass flow, structured output parsing, error handling, citation mapping
-- [ ] `test_control.py` — all 5 compliance checks pass/fail correctly, audit entries created
-- [ ] `test_memory.py` — embedding, search, chunking, knowledge CRUD
-- [ ] `test_document.py` — DOCX generation, PDF generation, cost formatting, all 9 IDD sections
-- [ ] `test_flow.py` — workflow step completion, pause/resume, state transitions
-- [ ] `test_chunker.py` — document chunking produces expected chunk count and sizes
-
-**Multi-tenancy tests:**
-- [ ] Org A cannot see Org B's cases, clients, recommendations, knowledge
-- [ ] All list endpoints return only org-scoped data
-- [ ] Cross-org access returns 404, not 403 (no information leakage)
-
-**Deterministic rules engine tests (when built):**
-- [ ] `test_suitability.py` — known inputs → known score, each factor tested independently
-- [ ] `test_pension_calc.py` — ITP1/SAF-LO/AKAP-KR rates verified against published values
-- [ ] `test_cost_calc.py` — fee calculations match hand-computed expected values
-- [ ] `test_eligibility.py` — agreement → provider mapping is correct
-
-**Security tests:**
-- [ ] Dev bypass blocked when DEBUG=false
-- [ ] PII fields encrypted in database, decrypted on read
-- [ ] Rate limiting enforced on LLM endpoints
-- [ ] Invalid JWT returns 401
-- [ ] Self-approval of own recommendation rejected
+- [ ] CI integration — tests run on every PR
+- [ ] Service-layer unit tests (reasoner, control, memory, document, flow)
+- [ ] Security tests (dev bypass blocked in prod, PII encryption verified, rate limiting)
 
 ---
 
@@ -278,4 +292,4 @@
 | **Wavvest** (founded 2024, Apex partnership) | US, AI financial planning co-pilot, custodial data | No European market, no pension-specific |
 | **Zocks / Jump AI** | Meeting transcription + CRM automation | No reasoning engine, no compliance docs |
 
-**Aetherion's edge**: Only product targeting European regulated pension advisory with IDD-compliant documentation, Swedish occupational pension expertise, and institutional knowledge capture (Memory).
+**Drident's edge**: Only product targeting European regulated pension advisory with IDD-compliant documentation, verified citations, deterministic calculations, and institutional knowledge capture (Firm Memory).

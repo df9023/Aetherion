@@ -106,11 +106,21 @@ class AuditAction(str, enum.Enum):
     DOCUMENT_INGESTED = "document_ingested"
     CLIENT_DATA_APPLIED = "client_data_applied"
     KNOWLEDGE_INGESTED = "knowledge_ingested"
+    INSIGHT_CREATED = "insight_created"
 
 
 class ActorType(str, enum.Enum):
     USER = "user"
     SYSTEM = "system"
+
+
+class FirmInsightCategory(str, enum.Enum):
+    CLIENT_SPECIFIC = "client_specific"
+    PRODUCT_TIP = "product_tip"
+    PROCESS_NOTE = "process_note"
+    COMPLIANCE_TIP = "compliance_tip"
+    LESSON_LEARNED = "lesson_learned"
+    GENERAL = "general"
 
 
 class KnowledgeCategory(str, enum.Enum):

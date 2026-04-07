@@ -9,6 +9,7 @@ from app.models.audit_entry import AuditEntry
 from app.models.knowledge_item import KnowledgeItem
 from app.models.document import Document
 from app.models.workflow import Workflow
+from app.models.firm_insight import FirmInsight
 
 __all__ = [
     "Organization",
@@ -22,4 +23,5 @@ __all__ = [
     "KnowledgeItem",
     "Document",
     "Workflow",
+    "FirmInsight",
 ]
