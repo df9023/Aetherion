@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     from app.models.user import User
     from app.models.case import Case
     from app.models.organization import Organization
+    from app.models.client_organization import ClientOrganization
 
 
 class Client(Base):
@@ -55,8 +56,23 @@ class Client(Base):
     created_by: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id"), nullable=False
     )
+    client_organization_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("client_organizations.id"), nullable=True
+    )
 
     # Relationships
     organization: Mapped["Organization"] = relationship("Organization")
     creator: Mapped["User"] = relationship("User", back_populates="created_clients")
     cases: Mapped[list["Case"]] = relationship("Case", back_populates="client")
+    client_organization: Mapped[Optional["ClientOrganization"]] = relationship(
+        "ClientOrganization", back_populates="clients"
+    )
+
+    @property
+    def client_organization_name(self) -> Optional[str]:
+        """Resolve org name from eagerly-loaded relationship."""
+        try:
+            co = self.client_organization
+            return co.name if co else None
+        except Exception:
+            return None

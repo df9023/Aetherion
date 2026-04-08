@@ -10,6 +10,9 @@ from app.schemas.recommendation import (
     RecommendationCreate,
     RecommendationUpdate,
     RecommendationResponse,
+    AnnotateStepRequest,
+    ReviewReasoningRequest,
+    ReasoningMetadata,
 )
 from app.schemas.evidence import EvidenceCreate, EvidenceResponse
 from app.schemas.audit_entry import AuditEntryCreate, AuditEntryResponse
@@ -18,8 +21,28 @@ from app.schemas.knowledge_item import (
     KnowledgeItemUpdate,
     KnowledgeItemResponse,
 )
+from app.schemas.client_organization import (
+    ClientOrganizationCreate,
+    ClientOrganizationUpdate,
+    ClientOrganizationResponse,
+    ClientOrganizationDetail,
+)
 from app.schemas.document import DocumentCreate, DocumentResponse
 from app.schemas.workflow import WorkflowCreate, WorkflowUpdate, WorkflowResponse
+from app.schemas.firm_insight import (
+    FirmInsightCreate,
+    FirmInsightUpdate,
+    FirmInsightResponse,
+)
+from app.schemas.regulatory_change import (
+    RegulatoryChangeCreate,
+    RegulatoryChangeUpdate,
+    RegulatoryChangeResponse,
+    CaseImpactResolve,
+    CaseImpactResponse,
+    ScanResult,
+    ComplianceHealthResponse,
+)
 
 __all__ = [
     "OrganizationCreate",
@@ -37,6 +60,9 @@ __all__ = [
     "RecommendationCreate",
     "RecommendationUpdate",
     "RecommendationResponse",
+    "AnnotateStepRequest",
+    "ReviewReasoningRequest",
+    "ReasoningMetadata",
     "EvidenceCreate",
     "EvidenceResponse",
     "AuditEntryCreate",
@@ -44,9 +70,23 @@ __all__ = [
     "KnowledgeItemCreate",
     "KnowledgeItemUpdate",
     "KnowledgeItemResponse",
+    "ClientOrganizationCreate",
+    "ClientOrganizationUpdate",
+    "ClientOrganizationResponse",
+    "ClientOrganizationDetail",
     "DocumentCreate",
     "DocumentResponse",
     "WorkflowCreate",
     "WorkflowUpdate",
     "WorkflowResponse",
+    "FirmInsightCreate",
+    "FirmInsightUpdate",
+    "FirmInsightResponse",
+    "RegulatoryChangeCreate",
+    "RegulatoryChangeUpdate",
+    "RegulatoryChangeResponse",
+    "CaseImpactResolve",
+    "CaseImpactResponse",
+    "ScanResult",
+    "ComplianceHealthResponse",
 ]

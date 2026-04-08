@@ -1,0 +1,24 @@
+---
+description: Aetherion (Drident) product context, architecture, and tech stack
+alwaysApply: true
+---
+
+# Aetherion (Drident)
+
+AI-native decision workspace for regulated pension advisory firms. Swedish occupational pension is the starting market.
+
+## Architecture
+
+Monolithic FastAPI backend + Next.js 14 frontend. PostgreSQL + pgvector. Multi-tenant (org-scoped).
+
+## Key Services
+
+- `reasoner.py` — Two-pass LLM: tool_use (structured output) + Citations API (verified evidence)
+- `suitability.py`, `pension_calculator.py`, `eligibility.py` — Deterministic calculations (code, not LLM)
+- `memory.py` — RAG: embedding, chunking, semantic search
+- `control.py` — Compliance checks
+- `document.py` — IDD-compliant doc generation (DOCX/PDF)
+
+## Domain Terminology
+
+Use consistently: `case` (not ticket), `recommendation` (not suggestion), `evidence` (not reference), `audit_entry` (not log), `knowledge_item` (not document), `client_organization` (employer company), `organization` (advisory firm/tenant), `meeting_brief` (not prep).

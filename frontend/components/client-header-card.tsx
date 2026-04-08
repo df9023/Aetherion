@@ -23,7 +23,7 @@ function calculateAge(dob: string) {
 }
 
 function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString("en-SE", {
+  return new Date(dateStr).toLocaleDateString("sv-SE", {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -47,11 +47,11 @@ export function ClientHeaderCard({ client }: ClientHeaderCardProps) {
         <div className="flex-1">
           <h1 className="mb-1 text-xl font-semibold text-slate-900">{client.name}</h1>
           <p className="mb-3 text-sm text-slate-500">
-            Born {formatDate(client.date_of_birth)} · {calculateAge(client.date_of_birth)} years
+            Född {formatDate(client.date_of_birth)} · {calculateAge(client.date_of_birth)} år
           </p>
 
           <div className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${riskColor.bg} ${riskColor.text}`}>
-            {client.employment_status.charAt(0).toUpperCase() + client.employment_status.slice(1).replace("_", " ")}
+            {({ employed: "Anställd", self_employed: "Egenföretagare", retired: "Pensionär", other: "Övrigt" } as Record<string, string>)[client.employment_status] ?? client.employment_status}
           </div>
         </div>
       </div>

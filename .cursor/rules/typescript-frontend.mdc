@@ -1,0 +1,25 @@
+---
+description: TypeScript/React frontend conventions
+globs: frontend/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Frontend Conventions
+
+- Strict TypeScript — no `any`
+- Functional components only
+- React Query for all server state (hooks in `lib/hooks.ts`)
+- UI labels centralized in `lib/labels.ts`
+- shadcn/ui components from `@/components/ui/`
+- **All user-facing text in Swedish**
+- Minimum font size `text-xs` — never use `text-[10px]` or `text-[11px]`
+- Buttons sized for easy clicking (min `py-2.5`)
+- Card style: `rounded-xl border border-slate-200/60 bg-white shadow-sm`
+
+```tsx
+// ❌ BAD — hardcoded English, tiny text
+<p className="text-[10px]">No cases found</p>
+
+// ✅ GOOD — Swedish, readable size
+<p className="text-sm text-slate-400">Inga ärenden hittades</p>
+```

@@ -12,7 +12,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           queries: { staleTime: 30000, retry: 1 },
           mutations: {
             onError: (error: Error) => {
-              toast.error(error.message || "Something went wrong")
+              toast.error(error.message || "Något gick fel")
             },
           },
         },

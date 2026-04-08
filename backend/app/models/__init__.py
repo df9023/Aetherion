@@ -1,6 +1,7 @@
 from app.models.organization import Organization
 from app.models.user import User
 from app.models.client import Client
+from app.models.client_organization import ClientOrganization
 from app.models.case import Case
 from app.models.recommendation import Recommendation
 from app.models.evidence import Evidence
@@ -8,11 +9,15 @@ from app.models.audit_entry import AuditEntry
 from app.models.knowledge_item import KnowledgeItem
 from app.models.document import Document
 from app.models.workflow import Workflow
+from app.models.firm_insight import FirmInsight
+from app.models.regulatory_change import RegulatoryChange
+from app.models.case_impact import CaseImpact
 
 __all__ = [
     "Organization",
     "User",
     "Client",
+    "ClientOrganization",
     "Case",
     "Recommendation",
     "Evidence",
@@ -20,4 +25,7 @@ __all__ = [
     "KnowledgeItem",
     "Document",
     "Workflow",
+    "FirmInsight",
+    "RegulatoryChange",
+    "CaseImpact",
 ]

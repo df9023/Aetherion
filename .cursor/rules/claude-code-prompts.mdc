@@ -1,0 +1,42 @@
+---
+description: How to write Claude Code prompts — delegate hard implementation, specify intent precisely
+globs: prompts/**/*.md
+alwaysApply: false
+---
+
+# Claude Code Prompt Style
+
+When writing prompts for Claude Code (files in `prompts/`):
+
+- **Specify WHAT, not HOW** for complex implementation details — let Claude Code figure out the technical approach
+- **Be precise on intent** — the problem, the user experience, the data model, the API contract
+- **Be precise on constraints** — naming, language (Swedish UI), design system, multi-tenancy, testing expectations
+- **Leave algorithmic/architectural choices to Claude Code** unless there's a specific reason to prescribe them
+- **Always include**: read `CLAUDE.md`, match existing patterns, run tests, Swedish UI text
+
+```markdown
+# ❌ BAD — over-specifying implementation
+Create a function that uses a BFS traversal over a dependency graph
+stored as an adjacency list in a dict[str, list[str]], then for each
+node check if the hash of its content differs from the cached version...
+
+# ✅ GOOD — clear intent, delegates implementation
+When a regulatory document is updated in the knowledge base, identify
+which active cases reference rules from that document and flag them
+for advisor review. The advisor should see which specific reasoning
+steps are affected and why.
+```
+
+What to always specify explicitly:
+- New models/schemas (field names, types, relationships)
+- API endpoint signatures (method, path, request/response shape)
+- Frontend UX (what the user sees, interactions, Swedish labels)
+- Test expectations (what to test, not how to implement the test)
+- Constraints (org-scoped, audit trail, no PII logging)
+
+What to leave to Claude Code:
+- Query optimization strategies
+- Error handling edge cases beyond the obvious ones
+- Internal helper functions and utilities
+- Migration implementation details
+- Complex parsing/transformation logic

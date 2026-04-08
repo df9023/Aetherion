@@ -21,7 +21,7 @@ function calculateAge(dob: string) {
 }
 
 function formatCurrency(amount: string) {
-  return new Intl.NumberFormat("sv-SE").format(Math.round(Number(amount) / 12)) + " kr/mo"
+  return new Intl.NumberFormat("sv-SE").format(Math.round(Number(amount) / 12)) + " kr/mån"
 }
 
 const riskColors: Record<string, { bg: string; text: string }> = {
@@ -31,9 +31,9 @@ const riskColors: Record<string, { bg: string; text: string }> = {
 }
 
 const riskLabels: Record<string, string> = {
-  low: "Low",
-  moderate: "Moderate",
-  high: "High",
+  low: "Låg risk",
+  moderate: "Medel risk",
+  high: "Hög risk",
 }
 
 export default function ClientsPage() {
@@ -51,18 +51,18 @@ export default function ClientsPage() {
   return (
     <>
       <CreateClientDialog open={openCreateDialog} onOpenChange={setOpenCreateDialog} />
-      <TopBar breadcrumbs={[{ label: "Clients" }]} />
+      <TopBar breadcrumbs={[{ label: "Klienter" }]} />
       <main className="flex-1 bg-slate-50">
         <div className="mx-auto max-w-7xl px-6 py-8">
           {/* Header */}
           <div className="mb-8 flex items-center justify-between">
-            <h1 className="text-2xl font-semibold text-slate-900">Clients</h1>
+            <h1 className="text-xl font-semibold text-slate-900">Klienter</h1>
             <Button
               onClick={() => setOpenCreateDialog(true)}
               className="gap-2 bg-sky-500 text-white hover:bg-sky-600"
             >
               <Plus className="h-4 w-4" />
-              New Client
+              Ny klient
             </Button>
           </div>
 
@@ -71,11 +71,10 @@ export default function ClientsPage() {
             <div className="relative">
               <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
               <Input
-                placeholder="Search clients..."
+                placeholder="Sök klienter..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="bg-white border-slate-200/60 pl-10"
-                data-search-input
               />
             </div>
           </div>
@@ -106,42 +105,49 @@ export default function ClientsPage() {
                 return (
                   <Link key={client.id} href={`/clients/${client.id}`} className="block">
                     <div className="h-full rounded-xl border border-slate-200/60 bg-white p-5 shadow-sm transition-all duration-200 hover:border-l-4 hover:border-l-sky-400">
-                      {/* Initials avatar */}
                       <div className="mb-3 flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100">
                           <span className="text-sm font-medium text-slate-600">{initials}</span>
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-semibold text-slate-900">{client.name}</p>
-                          <p className="text-xs text-slate-400">{calculateAge(client.date_of_birth)} years</p>
+                          <p className="text-sm text-slate-400">{calculateAge(client.date_of_birth)} år</p>
                         </div>
                       </div>
 
-                      {/* Employer */}
                       <div className="mb-3 flex items-center gap-2">
                         <Building2 className="h-4 w-4 shrink-0 text-slate-400" />
-                        <p className="truncate text-sm text-slate-600">{client.employer_name ?? "—"}</p>
+                        {client.client_organization_id ? (
+                          <span
+                            onClick={(e) => e.stopPropagation()}
+                            className="truncate text-sm text-sky-600 hover:text-sky-700"
+                          >
+                            <Link href={`/organizations/${client.client_organization_id}`}>
+                              {client.client_organization_name ?? client.employer_name ?? "—"}
+                            </Link>
+                          </span>
+                        ) : (
+                          <p className="truncate text-sm text-slate-600">{client.employer_name ?? "—"}</p>
+                        )}
                       </div>
 
-                      {/* Income */}
                       <div className="mb-3">
                         <p className="text-sm text-slate-600">
                           {client.annual_income ? formatCurrency(client.annual_income) : "—"}
                         </p>
                       </div>
 
-                      {/* Risk profile badge */}
                       {client.risk_profile && riskColor ? (
                         <div className="flex items-center gap-2">
                           <Shield className="h-4 w-4 shrink-0 text-slate-400" />
-                          <div className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${riskColor.bg} ${riskColor.text}`}>
+                          <div className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-sm font-medium ${riskColor.bg} ${riskColor.text}`}>
                             {riskLabels[client.risk_profile] ?? client.risk_profile}
                           </div>
                         </div>
                       ) : (
                         <div className="flex items-center gap-2">
                           <Shield className="h-4 w-4 shrink-0 text-slate-400" />
-                          <span className="text-xs text-slate-400">—</span>
+                          <span className="text-sm text-slate-400">—</span>
                         </div>
                       )}
                     </div>
@@ -153,16 +159,16 @@ export default function ClientsPage() {
             !isLoading && (
               <div className="flex flex-col items-center justify-center py-12">
                 <Users className="mb-3 h-12 w-12 text-slate-300" />
-                <p className="mb-1 font-medium text-slate-600">No clients found</p>
+                <p className="mb-1 text-base font-medium text-slate-600">Inga klienter hittades</p>
                 <p className="mb-4 text-sm text-slate-400">
-                  Create your first client to get started
+                  Skapa din första klient för att komma igång
                 </p>
                 <Button
                   onClick={() => setOpenCreateDialog(true)}
                   className="gap-2 bg-sky-500 text-white hover:bg-sky-600"
                 >
                   <Plus className="h-4 w-4" />
-                  New Client
+                  Ny klient
                 </Button>
               </div>
             )

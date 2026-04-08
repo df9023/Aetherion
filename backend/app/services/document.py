@@ -307,13 +307,27 @@ class DocumentService:
         for step in needs_steps:
             p = doc.add_paragraph()
             p.paragraph_format.left_indent = Inches(0.3)
-            bold_run = p.add_run(f"Steg {step['step']}: ")
+            step_label = step.get("title") or f"Steg {step['step']}"
+            bold_run = p.add_run(f"{step_label}: ")
             bold_run.bold = True
             p.add_run(step["description"])
-            conclusion_p = doc.add_paragraph()
-            conclusion_p.paragraph_format.left_indent = Inches(0.3)
-            conclusion_run = conclusion_p.add_run(step["conclusion"])
-            conclusion_run.italic = True
+            # Cited texts as indented blockquotes
+            for ct in step.get("cited_texts", []):
+                cq = doc.add_paragraph()
+                cq.paragraph_format.left_indent = Inches(0.5)
+                cq_run = cq.add_run(f"\u201c{ct['text']}\u201d")
+                cq_run.italic = True
+                cq_run.font.size = Pt(9)
+                cq_run.font.color.rgb = RGBColor(0x71, 0x80, 0x96)
+                if ct.get("source_title"):
+                    src_run = cq.add_run(f" \u2014 {ct['source_title']}")
+                    src_run.font.size = Pt(8.5)
+                    src_run.font.color.rgb = RGBColor(0x99, 0x99, 0x99)
+            if step.get("conclusion"):
+                conclusion_p = doc.add_paragraph()
+                conclusion_p.paragraph_format.left_indent = Inches(0.3)
+                conclusion_run = conclusion_p.add_run(step["conclusion"])
+                conclusion_run.italic = True
 
         # --- 3. Marknads- och produktanalys ---
         add_section(3, "Marknads- och produktanalys")
@@ -359,13 +373,34 @@ class DocumentService:
                 continue
             p = doc.add_paragraph()
             p.paragraph_format.left_indent = Inches(0.3)
-            bold_run = p.add_run(f"Steg {step['step']}: ")
+            step_label = step.get("title") or f"Steg {step['step']}"
+            bold_run = p.add_run(f"{step_label}: ")
             bold_run.bold = True
             p.add_run(step["description"])
-            cp = doc.add_paragraph()
-            cp.paragraph_format.left_indent = Inches(0.3)
-            cr = cp.add_run(step["conclusion"])
-            cr.italic = True
+            # Cited texts
+            for ct in step.get("cited_texts", []):
+                cq = doc.add_paragraph()
+                cq.paragraph_format.left_indent = Inches(0.5)
+                cq_run = cq.add_run(f"\u201c{ct['text']}\u201d")
+                cq_run.italic = True
+                cq_run.font.size = Pt(9)
+                cq_run.font.color.rgb = RGBColor(0x71, 0x80, 0x96)
+                if ct.get("source_title"):
+                    src_run = cq.add_run(f" \u2014 {ct['source_title']}")
+                    src_run.font.size = Pt(8.5)
+                    src_run.font.color.rgb = RGBColor(0x99, 0x99, 0x99)
+            # Advisor annotation
+            if step.get("advisor_annotation"):
+                ap = doc.add_paragraph()
+                ap.paragraph_format.left_indent = Inches(0.5)
+                ar = ap.add_run(f"Rådgivarens kommentar: {step['advisor_annotation']}")
+                ar.font.size = Pt(9)
+                ar.font.color.rgb = RGBColor(0x2C, 0x52, 0x82)
+            if step.get("conclusion"):
+                cp = doc.add_paragraph()
+                cp.paragraph_format.left_indent = Inches(0.3)
+                cr = cp.add_run(step["conclusion"])
+                cr.italic = True
 
         assumptions = rec.get("assumptions") or []
         if assumptions:
@@ -407,7 +442,10 @@ class DocumentService:
         add_section(6, "Lämplighetsbedömning")
         score = rec.get("suitability_score")
         if score is not None:
-            score_pct = f"{score * 100:.0f}%"
+            try:
+                score_pct = f"{float(score) * 100:.0f}%"
+            except (ValueError, TypeError):
+                score_pct = str(score)
             doc.add_paragraph(f"Lämplighetspoäng: {score_pct}")
         assessment = "Denna rekommendation har bedömts mot klientens riskprofil"
         if client.get("risk_profile"):
@@ -450,11 +488,17 @@ class DocumentService:
                     ci = 1
                     if has_fee:
                         fee = s.get("projected_outcome", {}).get("annual_fee")
-                        row.cells[ci].text = f"{fee}%" if fee is not None else "—"
+                        try:
+                            row.cells[ci].text = f"{float(fee)}%" if fee is not None else "—"
+                        except (ValueError, TypeError):
+                            row.cells[ci].text = str(fee) if fee is not None else "—"
                         ci += 1
                     if has_cost:
                         cost = s.get("projected_outcome", {}).get("total_cost")
-                        row.cells[ci].text = f"{cost:,.0f} SEK" if cost is not None else "—"
+                        try:
+                            row.cells[ci].text = f"{float(cost):,.0f} SEK" if cost is not None else "—"
+                        except (ValueError, TypeError):
+                            row.cells[ci].text = str(cost) if cost is not None else "—"
 
         # --- 8. Intressekonflikter ---
         add_section(8, "Intressekonflikter")

@@ -1,0 +1,21 @@
+---
+description: LLM integration patterns for the Reasoner
+globs: backend/app/services/reasoner.py,backend/app/prompts/**/*.j2
+alwaysApply: false
+---
+
+# LLM Integration
+
+## Two-Pass Architecture
+
+1. **Pass 1 (tool_use):** Structured fields — summary, assumptions, scenarios, suitability_score, costs. Prompt: `prompts/recommendation.j2`
+2. **Pass 2 (Citations API):** Knowledge items sent as `document` blocks with `citations: {"enabled": true}`. Returns reasoning chain with verbatim quotes. Prompt: `prompts/evidence_analysis.j2`
+
+## Rules
+
+- Deterministic services (`suitability.py`, `pension_calculator.py`, `eligibility.py`) compute all numbers first
+- Pass computed facts into the LLM prompt — LLM explains, never invents numbers
+- All prompts as Jinja2 templates in `backend/app/prompts/`
+- Parse all outputs into Pydantic models
+- Log every LLM call in the audit trail
+- Handle errors gracefully — never crash on LLM failure

@@ -1,0 +1,23 @@
+---
+description: Testing patterns and conventions
+globs: backend/tests/**/*.py
+alwaysApply: false
+---
+
+# Testing
+
+- `pytest` + `pytest-asyncio` + `httpx` AsyncClient
+- Pure unit tests for deterministic services (no DB, no async, no mocks)
+- API tests use header-based auth (`X-Dev-User-Id`) — not dependency overrides
+- Multi-tenancy isolation tests for every endpoint (org2 can't see org1's data)
+- Factory helpers in `tests/factories.py`
+- Never call real LLM API in tests — mock it
+- All tests under 5 seconds total
+
+```python
+# ❌ BAD — overriding global dependency
+app.dependency_overrides[get_current_user] = lambda: user
+
+# ✅ GOOD — header-based auth, supports multiple test clients
+client = AsyncClient(headers={"X-Dev-User-Id": str(user.id)})
+```

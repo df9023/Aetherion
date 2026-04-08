@@ -49,6 +49,9 @@ class Recommendation(Base):
     approved_by: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id"), nullable=True
     )
+    reasoning_metadata: Mapped[Optional[dict]] = mapped_column(
+        JSONB, nullable=True
+    )
 
     # Relationships
     case: Mapped["Case"] = relationship("Case", back_populates="recommendations")

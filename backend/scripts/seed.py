@@ -39,20 +39,25 @@ logger = logging.getLogger(__name__)
 from app.models.organization import Organization
 from app.models.user import User
 from app.models.client import Client
+from app.models.client_organization import ClientOrganization
 from app.models.case import Case
 from app.models.audit_entry import AuditEntry
 from app.models.knowledge_item import KnowledgeItem
+from app.models.regulatory_change import RegulatoryChange
+from app.models.case_impact import CaseImpact
 from app.models.base import (
     OrganizationType,
     UserRole,
     EmploymentStatus,
     CollectiveAgreement,
     RiskProfile,
+    CaseImpactStatus,
     CaseType,
     CaseStatus,
     KnowledgeCategory,
     AuditAction,
     ActorType,
+    RegulatoryChangeSeverity,
 )
 
 
@@ -68,10 +73,17 @@ USER_ADMIN_ID = _uuid("user.admin.eriksson.spp")
 USER_ADVISOR_ID = _uuid("user.advisor.lindqvist.spp")
 CLIENT_1_ID = _uuid("client.anna.johansson")
 CLIENT_2_ID = _uuid("client.lars.pettersson")
+CLIENT_ORG_1_ID = _uuid("client_org.mckinsey_stockholm")
+CLIENT_ORG_2_ID = _uuid("client_org.volvo_goteborg")
+CLIENT_ORG_3_ID = _uuid("client_org.scandic_hotels")
 CASE_1_ID = _uuid("case.anna.retirement")
 CASE_2_ID = _uuid("case.lars.lonvaxling")
 
 KI_IDS = [_uuid(f"knowledge.{i}") for i in range(6)]
+
+REG_CHANGE_FFFS_ID = _uuid("reg_change.fffs_2026_4")
+REG_CHANGE_IBB_ID = _uuid("reg_change.ibb_2026")
+REG_CHANGE_COLLECTUM_ID = _uuid("reg_change.collectum_itp1_2026_07")
 
 
 # ---------------------------------------------------------------------------
@@ -430,6 +442,9 @@ async def seed() -> None:
             print("Database already seeded. Truncating and re-seeding...")
 
         print("Cleaning all seed data...")
+        await db.execute(text("DELETE FROM case_impacts"))
+        await db.execute(text("DELETE FROM regulatory_changes"))
+        await db.execute(text("DELETE FROM firm_insights"))
         await db.execute(text("DELETE FROM audit_entries"))
         await db.execute(text("DELETE FROM evidences"))
         await db.execute(text("DELETE FROM workflows"))
@@ -437,6 +452,7 @@ async def seed() -> None:
         await db.execute(text("DELETE FROM recommendations"))
         await db.execute(text("DELETE FROM cases"))
         await db.execute(text("DELETE FROM clients"))
+        await db.execute(text("DELETE FROM client_organizations"))
         await db.execute(text("DELETE FROM knowledge_items"))
         await db.execute(text("DELETE FROM users"))
         await db.execute(text("DELETE FROM organizations"))
@@ -505,6 +521,51 @@ async def seed() -> None:
             created_by=USER_ADVISOR_ID,
         )
         db.add_all([client_1, client_2])
+        await db.flush()
+
+        print("Seeding client organizations...")
+        co_1 = ClientOrganization(
+            id=CLIENT_ORG_1_ID,
+            organization_id=ORG_ID,
+            name="McKinsey & Company Stockholm",
+            org_number="556109-9101",
+            industry="Managementkonsulting",
+            collective_agreement=CollectiveAgreement.ITP1,
+            contact_person="Lisa Bergström",
+            contact_email="lisa.bergstrom@mckinsey.com",
+            employee_count=450,
+            created_by=USER_ADVISOR_ID,
+        )
+        co_2 = ClientOrganization(
+            id=CLIENT_ORG_2_ID,
+            organization_id=ORG_ID,
+            name="Volvo Cars Göteborg",
+            org_number="556074-3089",
+            industry="Fordonsindustri",
+            collective_agreement=CollectiveAgreement.SAF_LO,
+            contact_person="Anders Nilsson",
+            contact_email="anders.nilsson@volvocars.com",
+            employee_count=12000,
+            created_by=USER_ADVISOR_ID,
+        )
+        co_3 = ClientOrganization(
+            id=CLIENT_ORG_3_ID,
+            organization_id=ORG_ID,
+            name="Scandic Hotels AB",
+            org_number="556299-1009",
+            industry="Hotell & Restaurang",
+            collective_agreement=CollectiveAgreement.OTHER,
+            contact_person="Maria Svensson",
+            contact_email="maria.svensson@scandichotels.com",
+            employee_count=3200,
+            created_by=USER_ADVISOR_ID,
+        )
+        db.add_all([co_1, co_2, co_3])
+        await db.flush()
+
+        # Link existing clients to their client organizations
+        client_1.client_organization_id = CLIENT_ORG_1_ID
+        client_2.client_organization_id = CLIENT_ORG_2_ID
         await db.flush()
 
         print("Seeding cases...")
@@ -576,6 +637,157 @@ async def seed() -> None:
         print("Seeding knowledge from documents...")
         doc_count = await seed_knowledge_documents(db, embed, ORG_ID, USER_ADMIN_ID)
 
+        print("Seeding regulatory changes...")
+        now = datetime.now(timezone.utc)
+        reg_changes = [
+            RegulatoryChange(
+                id=REG_CHANGE_FFFS_ID,
+                organization_id=ORG_ID,
+                created_by=USER_ADMIN_ID,
+                title="FFFS 2026:4 — Uppdaterade dokumentationskrav för löneväxling",
+                description=(
+                    "Finansinspektionen publicerade den 3 april 2026 FFFS 2026:4 med "
+                    "skärpta dokumentationskrav för rådgivning om löneväxling ovanför "
+                    "inkomsttaket. Rådgivare måste nu explicit dokumentera hur SGI-påverkan "
+                    "har diskuterats med klienten samt bifoga en skriftlig bekräftelse "
+                    "från arbetsgivaren innan rekommendationen kan slutföras. Ikraftträdande "
+                    "2026-05-01."
+                ),
+                source="Finansinspektionen",
+                source_url="https://fi.se/sv/publicerat/foreskrifter/2026/fffs-2026-4/",
+                severity=RegulatoryChangeSeverity.HIGH,
+                affected_case_types=[CaseType.SALARY_EXCHANGE.value],
+                affected_agreements=[
+                    CollectiveAgreement.ITP1.value,
+                    CollectiveAgreement.ITP2.value,
+                ],
+                affected_tags=["löneväxling", "dokumentation", "SGI"],
+                is_active=True,
+                published_at=now,
+            ),
+            RegulatoryChange(
+                id=REG_CHANGE_IBB_ID,
+                organization_id=ORG_ID,
+                created_by=USER_ADMIN_ID,
+                title="IBB 2026 fastställt till 85 600 SEK",
+                description=(
+                    "Inkomstbasbeloppet (IBB) för 2026 har fastställts av regeringen till "
+                    "85 600 SEK. Detta påverkar beräkningen av inkomsttaket (7,5 IBB = "
+                    "642 000 SEK/år eller 53 500 SEK/mån) som används i alla "
+                    "pensionsberäkningar. Alla aktiva ärenden bör granskas för att "
+                    "säkerställa att rätt IBB används i beräkningar och rekommendationer."
+                ),
+                source="Regeringen / SCB",
+                source_url="https://www.scb.se/hitta-statistik/statistik-efter-amne/priser-och-konsumtion/konsumentprisindex/konsumentprisindex-kpi/pong/tabell-och-diagram/inkomstbasbelopp/",
+                severity=RegulatoryChangeSeverity.MEDIUM,
+                affected_case_types=[
+                    CaseType.PENSION_REVIEW.value,
+                    CaseType.TRANSFER_ADVICE.value,
+                    CaseType.SALARY_EXCHANGE.value,
+                    CaseType.RETIREMENT_PLANNING.value,
+                    CaseType.DECUMULATION.value,
+                ],
+                affected_agreements=[],
+                affected_tags=["IBB", "inkomsttak", "beräkning"],
+                is_active=True,
+                published_at=now,
+            ),
+            RegulatoryChange(
+                id=REG_CHANGE_COLLECTUM_ID,
+                organization_id=ORG_ID,
+                created_by=USER_ADMIN_ID,
+                title="Collectum: Nya regler för ITP1-val från 2026-07-01",
+                description=(
+                    "Collectum har aviserat att ITP1-tjänstepensionsvalet ändras från "
+                    "1 juli 2026. Nya regler för återbetalningsskydd, fondutbud och "
+                    "avgifter införs. Rådgivare bör informera klienter med ITP1 som "
+                    "överväger att göra ett aktivt val om de nya reglerna och "
+                    "eventuellt avvakta till efter ikraftträdandet."
+                ),
+                source="Collectum",
+                source_url="https://www.collectum.se/nyheter/itp1-andringar-2026",
+                severity=RegulatoryChangeSeverity.MEDIUM,
+                affected_case_types=[
+                    CaseType.PENSION_REVIEW.value,
+                    CaseType.RETIREMENT_PLANNING.value,
+                ],
+                affected_agreements=[CollectiveAgreement.ITP1.value],
+                affected_tags=["ITP1", "Collectum", "fondval"],
+                is_active=True,
+                published_at=now,
+            ),
+        ]
+        for rc in reg_changes:
+            db.add(rc)
+            db.add(
+                AuditEntry(
+                    case_id=None,
+                    action=AuditAction.REGULATORY_CHANGE_CREATED,
+                    actor_id=USER_ADMIN_ID,
+                    actor_type=ActorType.USER,
+                    details={
+                        "regulatory_change_id": str(rc.id),
+                        "title": rc.title,
+                        "severity": rc.severity.value,
+                    },
+                )
+            )
+        await db.flush()
+
+        print("Auto-scanning regulatory changes against active cases...")
+        active_cases = [case_1, case_2]
+        client_map = {CLIENT_1_ID: client_1, CLIENT_2_ID: client_2}
+        total_impacts = 0
+        for rc in reg_changes:
+            affected_case_types = set(rc.affected_case_types or [])
+            affected_agreements = set(rc.affected_agreements or [])
+            for case in active_cases:
+                if case.status in (CaseStatus.ARCHIVED, CaseStatus.COMPLETED):
+                    continue
+                case_client = client_map[case.client_id]
+                case_type_value = case.case_type.value
+                agreement_value = (
+                    case_client.collective_agreement.value
+                    if case_client.collective_agreement
+                    else None
+                )
+                matched_case_type = (
+                    bool(affected_case_types)
+                    and case_type_value in affected_case_types
+                )
+                matched_agreement = (
+                    bool(affected_agreements)
+                    and agreement_value is not None
+                    and agreement_value in affected_agreements
+                )
+                if not (matched_case_type or matched_agreement):
+                    continue
+                reasons = []
+                sections = []
+                if matched_case_type:
+                    reasons.append(
+                        f"Ärendetyp ({case_type_value}) ingår i den reglering som ändrats"
+                    )
+                    sections.append("case_type")
+                if matched_agreement:
+                    reasons.append(
+                        f"Kollektivavtal ({agreement_value}) påverkas av ändringen"
+                    )
+                    sections.append("collective_agreement")
+                match_reason = f"{rc.title}. " + " · ".join(reasons) + "."
+                impact = CaseImpact(
+                    organization_id=ORG_ID,
+                    regulatory_change_id=rc.id,
+                    case_id=case.id,
+                    match_reason=match_reason,
+                    affected_sections=sections,
+                    status=CaseImpactStatus.OPEN,
+                )
+                db.add(impact)
+                total_impacts += 1
+        await db.flush()
+        print(f"  Created {total_impacts} case impact(s)")
+
         await db.commit()
 
         print()
@@ -587,9 +799,13 @@ async def seed() -> None:
         print(f"Advisor user:  {USER_ADVISOR_ID}  maria.lindqvist@spp.se")
         print(f"Client 1:      {CLIENT_1_ID}  Anna Johansson (ITP1, 45 yr)")
         print(f"Client 2:      {CLIENT_2_ID}  Lars Pettersson (ITP2, 58 yr)")
+        print(f"Client Org 1:  {CLIENT_ORG_1_ID}  McKinsey Stockholm")
+        print(f"Client Org 2:  {CLIENT_ORG_2_ID}  Volvo Göteborg")
+        print(f"Client Org 3:  {CLIENT_ORG_3_ID}  Scandic Hotels")
         print(f"Case 1:        {CASE_1_ID}  Retirement planning")
         print(f"Case 2:        {CASE_2_ID}  Löneväxling")
         print(f"Knowledge:     {len(KNOWLEDGE_ITEMS)} base items + {doc_count} document chunks")
+        print(f"Reg changes:   {len(reg_changes)} seeded, {total_impacts} case impact(s)")
         print()
 
 

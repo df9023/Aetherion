@@ -29,9 +29,36 @@ export interface ClientResponse {
   desired_retirement_age: number | null
   risk_profile: string | null
   organization_id: string
+  client_organization_id: string | null
+  client_organization_name: string | null
   created_at: string
   updated_at: string
   created_by: string
+}
+
+export interface CitedText {
+  text: string
+  source_title: string | null
+  knowledge_item_id: string | null
+}
+
+export interface ReasoningStep {
+  step: number
+  title: string | null
+  description: string
+  evidence_ids: string[]
+  cited_texts: CitedText[]
+  conclusion: string
+  advisor_annotation: string | null
+  annotated_by: string | null
+  annotated_at: string | null
+}
+
+export interface ReasoningMetadata {
+  review_status: "pending" | "reviewed"
+  reviewed_by: string | null
+  reviewed_at: string | null
+  review_comment: string | null
 }
 
 export interface RecommendationResponse {
@@ -39,12 +66,7 @@ export interface RecommendationResponse {
   case_id: string
   recommendation_type: string
   summary: string
-  reasoning_chain: {
-    step: number
-    description: string
-    evidence_ids: string[]
-    conclusion: string
-  }[]
+  reasoning_chain: ReasoningStep[]
   assumptions: {
     assumption: string
     basis: string
@@ -56,6 +78,7 @@ export interface RecommendationResponse {
     projected_outcome: Record<string, string>
   }[] | null
   suitability_score: string | null
+  reasoning_metadata: ReasoningMetadata | null
   version: number
   status: string
   created_at: string
@@ -96,6 +119,49 @@ export interface KnowledgeItemResponse {
   updated_at: string
   created_by: string
   approved_by: string | null
+}
+
+export interface FirmInsightResponse {
+  id: string
+  organization_id: string
+  title: string
+  content: string
+  category: string
+  case_types: string[]
+  collective_agreements: string[]
+  client_organization_id: string | null
+  client_organization_name: string | null
+  tags: string[]
+  source_case_id: string | null
+  source_case_title: string | null
+  is_active: boolean
+  upvotes: number
+  created_by: string
+  creator_name: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface ClientOrganizationResponse {
+  id: string
+  organization_id: string
+  name: string
+  org_number: string | null
+  industry: string | null
+  collective_agreement: string | null
+  contact_person: string | null
+  contact_email: string | null
+  contact_phone: string | null
+  employee_count: number | null
+  notes: string | null
+  client_count: number
+  created_at: string
+  updated_at: string
+  created_by: string
+}
+
+export interface ClientOrganizationDetail extends ClientOrganizationResponse {
+  clients: ClientResponse[]
 }
 
 export interface AuditEntryResponse {
@@ -260,6 +326,14 @@ export function useCaseAudit(caseId: string) {
   })
 }
 
+// Recent audit entries (cross-case, for dashboard)
+export function useRecentAudit(limit: number = 10) {
+  return useQuery({
+    queryKey: ["audit", "recent", limit],
+    queryFn: () => apiFetch<AuditEntryResponse[]>(`/audit/recent?limit=${limit}`),
+  })
+}
+
 // Knowledge search
 export function useKnowledgeSearch(query: string) {
   return useQuery({
@@ -278,6 +352,44 @@ export function useKnowledge() {
   return useQuery({
     queryKey: ["knowledge"],
     queryFn: () => apiFetch<KnowledgeItemResponse[]>("/knowledge"),
+  })
+}
+
+// Annotate reasoning step
+export function useAnnotateReasoningStep(recommendationId: string | undefined, caseId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ step, annotation }: { step: number; annotation: string }) =>
+      apiFetch<RecommendationResponse>(
+        `/recommendations/${recommendationId}/reasoning/${step}/annotate`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({ advisor_annotation: annotation }),
+        }
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["cases", caseId, "recommendations"] })
+      queryClient.invalidateQueries({ queryKey: ["cases", caseId, "audit"] })
+    },
+  })
+}
+
+// Review reasoning trail
+export function useReviewReasoning(recommendationId: string | undefined, caseId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (comment?: string) =>
+      apiFetch<RecommendationResponse>(
+        `/recommendations/${recommendationId}/reasoning/review`,
+        {
+          method: "POST",
+          body: JSON.stringify({ comment: comment || null }),
+        }
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["cases", caseId, "recommendations"] })
+      queryClient.invalidateQueries({ queryKey: ["cases", caseId, "audit"] })
+    },
   })
 }
 
@@ -432,5 +544,399 @@ export function useApplyExtraction(clientId: string) {
       queryClient.invalidateQueries({ queryKey: ["clients", clientId] })
       queryClient.invalidateQueries({ queryKey: ["clients"] })
     },
+  })
+}
+
+// Client Organizations
+export function useClientOrganizations() {
+  return useQuery({
+    queryKey: ["client-organizations"],
+    queryFn: () => apiFetch<ClientOrganizationResponse[]>("/client-organizations"),
+  })
+}
+
+export function useClientOrganization(id: string) {
+  return useQuery({
+    queryKey: ["client-organizations", id],
+    queryFn: () => apiFetch<ClientOrganizationDetail>(`/client-organizations/${id}`),
+    enabled: !!id,
+  })
+}
+
+export function useCreateClientOrganization() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (data: {
+      name: string
+      org_number?: string
+      industry?: string
+      collective_agreement?: string
+      contact_person?: string
+      contact_email?: string
+      contact_phone?: string
+      employee_count?: number
+      notes?: string
+    }) =>
+      apiFetch<ClientOrganizationResponse>("/client-organizations", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["client-organizations"] })
+    },
+  })
+}
+
+export function useUpdateClientOrganization(id: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (data: {
+      name?: string
+      org_number?: string
+      industry?: string
+      collective_agreement?: string
+      contact_person?: string
+      contact_email?: string
+      contact_phone?: string
+      employee_count?: number
+      notes?: string
+    }) =>
+      apiFetch<ClientOrganizationResponse>(`/client-organizations/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify(data),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["client-organizations"] })
+      queryClient.invalidateQueries({ queryKey: ["client-organizations", id] })
+    },
+  })
+}
+
+// Firm Insights
+export function useFirmInsights(filters?: Record<string, string>) {
+  const params = new URLSearchParams()
+  if (filters) {
+    for (const [key, value] of Object.entries(filters)) {
+      if (value) params.set(key, value)
+    }
+  }
+  const qs = params.toString()
+  return useQuery({
+    queryKey: ["firm-insights", filters ?? {}],
+    queryFn: () =>
+      apiFetch<FirmInsightResponse[]>(
+        qs ? `/firm-insights?${qs}` : "/firm-insights",
+      ),
+  })
+}
+
+export function useFirmInsight(id: string | undefined) {
+  return useQuery({
+    queryKey: ["firm-insights", id],
+    queryFn: () => apiFetch<FirmInsightResponse>(`/firm-insights/${id}`),
+    enabled: !!id,
+  })
+}
+
+export function useRelevantInsights(caseId: string) {
+  return useQuery({
+    queryKey: ["firm-insights", "relevant", caseId],
+    queryFn: () =>
+      apiFetch<FirmInsightResponse[]>(
+        `/firm-insights/relevant?case_id=${caseId}`,
+      ),
+    enabled: !!caseId,
+  })
+}
+
+export interface FirmInsightCreateInput {
+  title: string
+  content: string
+  category: string
+  case_types?: string[]
+  collective_agreements?: string[]
+  client_organization_id?: string | null
+  tags?: string[]
+  source_case_id?: string | null
+}
+
+export function useCreateFirmInsight() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (data: FirmInsightCreateInput) =>
+      apiFetch<FirmInsightResponse>("/firm-insights", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["firm-insights"] })
+      if (data.source_case_id) {
+        queryClient.invalidateQueries({
+          queryKey: ["firm-insights", "relevant", data.source_case_id],
+        })
+        queryClient.invalidateQueries({
+          queryKey: ["cases", data.source_case_id, "audit"],
+        })
+      }
+    },
+  })
+}
+
+export function useUpvoteFirmInsight() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (insightId: string) =>
+      apiFetch<FirmInsightResponse>(`/firm-insights/${insightId}/upvote`, {
+        method: "POST",
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["firm-insights"] })
+    },
+  })
+}
+
+export function useDeleteFirmInsight() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (insightId: string) =>
+      apiFetch<void>(`/firm-insights/${insightId}`, {
+        method: "DELETE",
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["firm-insights"] })
+    },
+  })
+}
+
+// Regulatory Pulse
+export type RegulatoryChangeSeverity = "critical" | "high" | "medium" | "low"
+export type CaseImpactStatus =
+  | "open"
+  | "acknowledged"
+  | "resolved"
+  | "not_applicable"
+
+export interface RegulatoryChangeResponse {
+  id: string
+  organization_id: string
+  created_by: string | null
+  creator_name: string | null
+  title: string
+  description: string
+  source: string
+  source_url: string | null
+  severity: RegulatoryChangeSeverity
+  affected_case_types: string[]
+  affected_agreements: string[]
+  affected_tags: string[]
+  knowledge_item_id: string | null
+  knowledge_item_title: string | null
+  is_active: boolean
+  published_at: string
+  created_at: string
+  updated_at: string
+  impact_count: number | null
+  open_impact_count: number | null
+}
+
+export interface CaseImpactResponse {
+  id: string
+  organization_id: string
+  regulatory_change_id: string
+  regulatory_change_title: string | null
+  regulatory_change_severity: RegulatoryChangeSeverity | null
+  case_id: string
+  case_title: string | null
+  case_status: string | null
+  match_reason: string
+  affected_sections: string[]
+  status: CaseImpactStatus
+  resolved_by: string | null
+  resolver_name: string | null
+  resolved_at: string | null
+  resolution_note: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface ScanResult {
+  regulatory_change_id: string
+  new_impacts: number
+  skipped_existing: number
+  total_matched_cases: number
+  impacts: CaseImpactResponse[]
+}
+
+export interface ComplianceHealthResponse {
+  total_active_cases: number
+  cases_with_open_impacts: number
+  total_open_impacts: number
+  impacts_by_severity: Record<string, number>
+  recent_changes: RegulatoryChangeResponse[]
+}
+
+export interface RegulatoryChangeCreateInput {
+  title: string
+  description: string
+  source: string
+  source_url?: string | null
+  severity: RegulatoryChangeSeverity
+  affected_case_types?: string[]
+  affected_agreements?: string[]
+  affected_tags?: string[]
+  knowledge_item_id?: string | null
+  published_at?: string | null
+}
+
+export function useRegulatoryChanges(filters?: Record<string, string>) {
+  const params = new URLSearchParams()
+  if (filters) {
+    for (const [key, value] of Object.entries(filters)) {
+      if (value) params.set(key, value)
+    }
+  }
+  const qs = params.toString()
+  return useQuery({
+    queryKey: ["regulatory-changes", filters ?? {}],
+    queryFn: () =>
+      apiFetch<RegulatoryChangeResponse[]>(
+        qs ? `/regulatory-changes?${qs}` : "/regulatory-changes",
+      ),
+  })
+}
+
+export function useRegulatoryChange(id: string | undefined) {
+  return useQuery({
+    queryKey: ["regulatory-changes", id],
+    queryFn: () =>
+      apiFetch<RegulatoryChangeResponse>(`/regulatory-changes/${id}`),
+    enabled: !!id,
+  })
+}
+
+export function useCreateRegulatoryChange() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (data: RegulatoryChangeCreateInput) =>
+      apiFetch<RegulatoryChangeResponse>("/regulatory-changes", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["regulatory-changes"] })
+      queryClient.invalidateQueries({ queryKey: ["compliance-health"] })
+    },
+  })
+}
+
+export function useScanRegulatoryChange() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (changeId: string) =>
+      apiFetch<ScanResult>(`/regulatory-changes/${changeId}/scan`, {
+        method: "POST",
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["regulatory-changes"] })
+      queryClient.invalidateQueries({ queryKey: ["case-impacts"] })
+      queryClient.invalidateQueries({ queryKey: ["compliance-health"] })
+    },
+  })
+}
+
+export function useDeleteRegulatoryChange() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (changeId: string) =>
+      apiFetch<void>(`/regulatory-changes/${changeId}`, {
+        method: "DELETE",
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["regulatory-changes"] })
+      queryClient.invalidateQueries({ queryKey: ["compliance-health"] })
+    },
+  })
+}
+
+export function useCaseImpacts(caseId: string | undefined) {
+  return useQuery({
+    queryKey: ["case-impacts", caseId],
+    queryFn: () =>
+      apiFetch<CaseImpactResponse[]>(`/cases/${caseId}/impacts`),
+    enabled: !!caseId,
+  })
+}
+
+export function useResolveCaseImpact() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      impactId,
+      resolutionNote,
+    }: {
+      impactId: string
+      resolutionNote?: string
+    }) =>
+      apiFetch<CaseImpactResponse>(
+        `/regulatory-changes/case-impacts/${impactId}/resolve`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({ resolution_note: resolutionNote ?? null }),
+        },
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["regulatory-changes"] })
+      queryClient.invalidateQueries({ queryKey: ["case-impacts"] })
+      queryClient.invalidateQueries({ queryKey: ["compliance-health"] })
+    },
+  })
+}
+
+export function useAcknowledgeCaseImpact() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (impactId: string) =>
+      apiFetch<CaseImpactResponse>(
+        `/regulatory-changes/case-impacts/${impactId}/acknowledge`,
+        { method: "PATCH" },
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["regulatory-changes"] })
+      queryClient.invalidateQueries({ queryKey: ["case-impacts"] })
+      queryClient.invalidateQueries({ queryKey: ["compliance-health"] })
+    },
+  })
+}
+
+export function useMarkImpactNotApplicable() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      impactId,
+      resolutionNote,
+    }: {
+      impactId: string
+      resolutionNote?: string
+    }) =>
+      apiFetch<CaseImpactResponse>(
+        `/regulatory-changes/case-impacts/${impactId}/not-applicable`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({ resolution_note: resolutionNote ?? null }),
+        },
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["regulatory-changes"] })
+      queryClient.invalidateQueries({ queryKey: ["case-impacts"] })
+      queryClient.invalidateQueries({ queryKey: ["compliance-health"] })
+    },
+  })
+}
+
+export function useComplianceHealth() {
+  return useQuery({
+    queryKey: ["compliance-health"],
+    queryFn: () =>
+      apiFetch<ComplianceHealthResponse>("/dashboard/compliance-health"),
   })
 }

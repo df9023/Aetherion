@@ -14,6 +14,8 @@ import {
   useGenerateDocument,
   useKnowledgeSearch,
   useUpdateCase,
+  useAnnotateReasoningStep,
+  useReviewReasoning,
   downloadDocument,
 } from "@/lib/hooks"
 import type { DocumentResponse, MeetingBriefResponse } from "@/lib/hooks"
@@ -24,6 +26,10 @@ import { ClientInfoCard } from "@/components/client-info-card"
 import { AIRecommendationCard } from "@/components/ai-recommendation-card"
 import { KnowledgeBaseCard } from "@/components/knowledge-base-card"
 import { AuditTrailCard } from "@/components/audit-trail-card"
+import { FirmInsightsCard } from "@/components/firm-insights-card"
+import { FirmInsightDialog } from "@/components/firm-insight-dialog"
+import { CaseImpactBanner } from "@/components/case-impact-banner"
+import { Lightbulb } from "lucide-react"
 
 function useDebounced(value: string, delay: number) {
   const [debounced, setDebounced] = useState(value)
@@ -45,6 +51,8 @@ export default function CaseDetailPage({ params }: { params: Promise<{ id: strin
   const generateRec = useGenerateRecommendation(id)
   const generateBrief = useGenerateMeetingBrief(id)
   const generateDoc = useGenerateDocument(recommendation?.id)
+  const annotateStep = useAnnotateReasoningStep(recommendation?.id, id)
+  const reviewReasoning = useReviewReasoning(recommendation?.id, id)
   const updateCase = useUpdateCase(id)
 
   const [meetingBrief, setMeetingBrief] = useState<MeetingBriefResponse | null>(null)
@@ -54,6 +62,7 @@ export default function CaseDetailPage({ params }: { params: Promise<{ id: strin
   const { data: knowledgeResults } = useKnowledgeSearch(debouncedQuery)
 
   const [generatedDoc, setGeneratedDoc] = useState<DocumentResponse | null>(null)
+  const [showInsightDialog, setShowInsightDialog] = useState(false)
 
   const handleGenerate = useCallback(() => {
     generateRec.mutate(additionalContext || undefined, {
@@ -65,7 +74,7 @@ export default function CaseDetailPage({ params }: { params: Promise<{ id: strin
     generateBrief.mutate(undefined, {
       onSuccess: (data) => {
         setMeetingBrief(data)
-        toast.success("Meeting brief generated")
+        toast.success("Mötesunderlag genererat")
       },
       onError: (err) => toast.error(err.message),
     })
@@ -76,7 +85,7 @@ export default function CaseDetailPage({ params }: { params: Promise<{ id: strin
       generateDoc.mutate(format, {
         onSuccess: (doc) => {
           setGeneratedDoc(doc)
-          toast.success("Document generated")
+          toast.success("Dokument genererat")
         },
         onError: (err) => toast.error(err.message),
       })
@@ -90,11 +99,34 @@ export default function CaseDetailPage({ params }: { params: Promise<{ id: strin
     }
   }, [generatedDoc])
 
+  const handleAnnotateStep = useCallback(
+    (step: number, annotation: string) => {
+      annotateStep.mutate(
+        { step, annotation },
+        {
+          onSuccess: () => toast.success("Kommentar sparad"),
+          onError: (err) => toast.error(err.message),
+        }
+      )
+    },
+    [annotateStep]
+  )
+
+  const handleReviewReasoning = useCallback(
+    (comment?: string) => {
+      reviewReasoning.mutate(comment, {
+        onSuccess: () => toast.success("Resonemangskedja markerad som granskad"),
+        onError: (err) => toast.error(err.message),
+      })
+    },
+    [reviewReasoning]
+  )
+
   const handleStatusChange = useCallback(
     (status: string) => {
       updateCase.mutate(
         { status },
-        { onSuccess: () => toast.success(`Status changed to ${status.replace(/_/g, " ")}`) }
+        { onSuccess: () => toast.success("Status uppdaterad") }
       )
     },
     [updateCase]
@@ -103,15 +135,15 @@ export default function CaseDetailPage({ params }: { params: Promise<{ id: strin
   if (caseLoading) {
     return (
       <>
-        <TopBar breadcrumbs={[{ label: "Cases", href: "/cases" }, { label: "Loading..." }]} />
-        <main className="flex flex-1 gap-5 px-6 py-6">
+        <TopBar breadcrumbs={[{ label: "Ärenden", href: "/cases" }, { label: "Laddar..." }]} />
+        <main className="flex flex-1 flex-col gap-5 px-6 py-6 lg:flex-row">
           <div className="flex min-w-0 flex-1 flex-col gap-5">
             <Skeleton className="h-24 rounded-xl" />
             <Skeleton className="h-60 rounded-xl" />
             <Skeleton className="h-40 rounded-xl" />
             <Skeleton className="h-96 rounded-xl" />
           </div>
-          <div className="flex w-[380px] shrink-0 flex-col gap-5">
+          <div className="flex w-full shrink-0 flex-col gap-5 lg:w-[380px]">
             <Skeleton className="h-80 rounded-xl" />
             <Skeleton className="h-40 rounded-xl" />
           </div>
@@ -123,9 +155,9 @@ export default function CaseDetailPage({ params }: { params: Promise<{ id: strin
   if (!caseData) {
     return (
       <>
-        <TopBar breadcrumbs={[{ label: "Cases", href: "/cases" }, { label: "Not Found" }]} />
+        <TopBar breadcrumbs={[{ label: "Ärenden", href: "/cases" }, { label: "Hittades inte" }]} />
         <main className="flex-1">
-          <div className="py-12 text-center text-slate-400">Case not found</div>
+          <div className="py-12 text-center text-sm text-slate-400">Ärendet hittades inte</div>
         </main>
       </>
     )
@@ -137,13 +169,30 @@ export default function CaseDetailPage({ params }: { params: Promise<{ id: strin
     <>
       <TopBar
         breadcrumbs={[
-          { label: "Cases", href: "/cases" },
+          { label: "Ärenden", href: "/cases" },
           { label: caseData.title.length > 50 ? caseData.title.slice(0, 50) + "…" : caseData.title },
         ]}
       />
-      <main className="flex flex-1 gap-5 px-6 py-6">
+      <main className="flex flex-1 flex-col gap-5 px-6 py-6 lg:flex-row">
         {/* Left column */}
         <div className="flex min-w-0 flex-1 flex-col gap-5">
+          <CaseImpactBanner caseId={id} />
+          {caseData.status === "completed" && (
+            <div className="flex items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-5 py-3">
+              <div className="flex items-center gap-2">
+                <Lightbulb className="h-4 w-4 text-amber-600" />
+                <p className="text-sm text-amber-900">
+                  Har du lärdomar från detta ärende?
+                </p>
+              </div>
+              <button
+                onClick={() => setShowInsightDialog(true)}
+                className="rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-xs font-medium text-amber-800 hover:bg-amber-100"
+              >
+                Lägg till insikt
+              </button>
+            </div>
+          )}
           <CaseHeaderCard caseData={caseData} onStatusChange={handleStatusChange} />
           <MeetingPrepCard brief={meetingBrief} isPending={generateBrief.isPending} onGenerate={handleGenerateBrief} />
           <ClientInfoCard client={client} isLoading={clientLoading} />
@@ -158,15 +207,41 @@ export default function CaseDetailPage({ params }: { params: Promise<{ id: strin
             generateDocPending={generateDoc.isPending}
             additionalContext={additionalContext}
             onAdditionalContextChange={setAdditionalContext}
+            onAnnotateStep={handleAnnotateStep}
+            onReviewReasoning={handleReviewReasoning}
+            annotationPending={annotateStep.isPending}
+            reviewPending={reviewReasoning.isPending}
           />
         </div>
 
         {/* Right panel */}
-        <div className="flex w-[380px] shrink-0 flex-col gap-5">
+        <div className="flex w-full shrink-0 flex-col gap-5 lg:w-[380px]">
           <KnowledgeBaseCard query={knowledgeQuery} onQueryChange={setKnowledgeQuery} results={knowledgeResults} />
+          <FirmInsightsCard
+            caseId={id}
+            caseType={caseData.case_type}
+            clientCollectiveAgreement={client?.collective_agreement}
+            clientOrganizationId={client?.client_organization_id ?? null}
+          />
           <AuditTrailCard entries={audit} />
         </div>
       </main>
+
+      {showInsightDialog && (
+        <FirmInsightDialog
+          open={showInsightDialog}
+          onOpenChange={setShowInsightDialog}
+          defaultValues={{
+            source_case_id: id,
+            case_types: caseData.case_type ? [caseData.case_type] : [],
+            collective_agreements: client?.collective_agreement
+              ? [client.collective_agreement]
+              : [],
+            client_organization_id: client?.client_organization_id ?? null,
+            category: "lesson_learned",
+          }}
+        />
+      )}
     </>
   )
 }

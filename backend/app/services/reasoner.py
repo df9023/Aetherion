@@ -17,6 +17,9 @@ from app.models.base import (
     AuditAction,
     ActorType,
 )
+from app.services.pension_calculator import PensionCalculator
+from app.services.eligibility import EligibilityChecker
+from app.services.suitability import SuitabilityEngine
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +50,6 @@ RECOMMENDATION_TOOL = {
         "required": [
             "summary",
             "assumptions",
-            "suitability_score",
             "cost_disclosure",
             "conflict_disclosure",
         ],
@@ -99,12 +101,6 @@ RECOMMENDATION_TOOL = {
                         },
                     },
                 },
-            },
-            "suitability_score": {
-                "type": "number",
-                "minimum": 0.0,
-                "maximum": 1.0,
-                "description": "Overall suitability score (0.0-1.0). Consider: does the recommendation match the client's risk profile, financial situation, knowledge level, and stated objectives?",
             },
             "cost_disclosure": {
                 "type": "string",
@@ -430,6 +426,14 @@ class ReasonerService:
             })
         return blocks
 
+    # IDD suitability phase titles assigned to reasoning steps in order
+    IDD_STEP_TITLES = [
+        "Behovsanalys",
+        "Kunskapsbedömning",
+        "Marknadsanalys",
+        "Lämplighetsbedömning",
+    ]
+
     def _parse_citations_response(
         self,
         response,
@@ -457,6 +461,7 @@ class ReasonerService:
 
             # Each text block with citations becomes a reasoning step
             evidence_ids_for_step: list[str] = []
+            cited_texts_for_step: list[dict] = []
 
             for cit in citations:
                 cited_text = getattr(cit, "cited_text", "") or ""
@@ -481,14 +486,23 @@ class ReasonerService:
                 # Resolve knowledge item from document_index
                 ki_id = ""
                 source_ref = ""
+                source_title = ""
                 category = "expert_knowledge"
                 if doc_idx < len(knowledge_items):
                     ki = knowledge_items[doc_idx]
                     ki_id = str(ki.get("id", ""))
                     source_ref = ki_id
+                    source_title = ki.get("title", "")
                     category = ki.get("category", "product_rule")
                     if ki_id and ki_id not in evidence_ids_for_step:
                         evidence_ids_for_step.append(ki_id)
+
+                # Build cited_text entry for the reasoning step
+                cited_texts_for_step.append({
+                    "text": cited_text,
+                    "source_title": source_title or None,
+                    "knowledge_item_id": ki_id or None,
+                })
 
                 # Map knowledge category to EvidenceSourceType
                 source_type = _category_to_source_type(category)
@@ -511,10 +525,18 @@ class ReasonerService:
             # Build reasoning step from this text block
             if text:
                 step_num += 1
+                # Assign IDD phase title based on step position
+                title = (
+                    self.IDD_STEP_TITLES[step_num - 1]
+                    if step_num <= len(self.IDD_STEP_TITLES)
+                    else None
+                )
                 reasoning_steps.append({
                     "step": step_num,
+                    "title": title,
                     "description": text,
                     "evidence_ids": evidence_ids_for_step,
+                    "cited_texts": cited_texts_for_step,
                     "conclusion": "",
                 })
 
@@ -581,6 +603,22 @@ class ReasonerService:
         Pass 1: tool_use for structured fields (summary, assumptions, scenarios, etc.)
         Pass 2: Citations API for evidence and reasoning chain with native citations
         """
+        # --- Compute deterministic facts before LLM call ---
+        client_dict = context.get("client", {})
+
+        pension_calc = PensionCalculator()
+        pension_estimate = pension_calc.calculate(client_dict)
+
+        eligibility_checker = EligibilityChecker()
+        eligibility_result = eligibility_checker.check(
+            client_dict, recommendation_type.value
+        )
+
+        context["computed"] = {
+            "pension_estimate": pension_estimate.model_dump(),
+            "eligibility": eligibility_result.model_dump(),
+        }
+
         # --- Pass 1: Structured recommendation via tool_use ---
         template = self.jinja_env.get_template("recommendation.j2")
         prompt = template.render(
@@ -600,6 +638,12 @@ class ReasonerService:
 
         parsed = self._extract_tool_input(response, "generate_recommendation")
 
+        # --- Compute deterministic suitability score (after Pass 1 returns scenarios) ---
+        suitability_engine = SuitabilityEngine()
+        suitability_result = suitability_engine.score(
+            client_dict, recommendation_type.value, parsed.get("scenarios")
+        )
+
         # --- Pass 2: Evidence and reasoning via Citations API ---
         reasoning_chain, evidences = await self._run_citations_pass(
             summary=parsed["summary"],
@@ -612,15 +656,19 @@ class ReasonerService:
         if parsed.get("cost_disclosure"):
             reasoning_chain.append({
                 "step": len(reasoning_chain) + 1,
+                "title": "Kostnadsinformation",
                 "description": "Kostnadsinformation (IDD-krav)",
                 "evidence_ids": [],
+                "cited_texts": [],
                 "conclusion": parsed["cost_disclosure"],
             })
         if parsed.get("conflict_disclosure"):
             reasoning_chain.append({
                 "step": len(reasoning_chain) + 1,
+                "title": "Intressekonflikter",
                 "description": "Intressekonfliktdisklosur (IDD-krav)",
                 "evidence_ids": [],
+                "cited_texts": [],
                 "conclusion": parsed["conflict_disclosure"],
             })
 
@@ -632,6 +680,23 @@ class ReasonerService:
         )
         next_version = version_result.scalar()
 
+        # Append suitability factor breakdown to reasoning chain
+        reasoning_chain.append({
+            "step": len(reasoning_chain) + 1,
+            "title": "Lämplighetsbedömning",
+            "description": "Lämplighetsbedömning (beräknad deterministiskt)",
+            "evidence_ids": [],
+            "cited_texts": [],
+            "conclusion": (
+                f"Lämplighetspoäng: {suitability_result.total_score:.2f} "
+                f"({suitability_result.grade}). "
+                + " | ".join(
+                    f"{f.name}: {f.score:.2f}" for f in suitability_result.factors
+                )
+            ),
+            "suitability_factors": [f.model_dump() for f in suitability_result.factors],
+        })
+
         recommendation = Recommendation(
             case_id=case_id,
             version=next_version,
@@ -640,7 +705,8 @@ class ReasonerService:
             reasoning_chain=reasoning_chain,
             assumptions=parsed["assumptions"],
             scenarios=parsed.get("scenarios"),
-            suitability_score=parsed.get("suitability_score"),
+            suitability_score=suitability_result.total_score,
+            reasoning_metadata={"review_status": "pending"},
             created_by=created_by,
         )
         self.db.add(recommendation)
@@ -682,6 +748,9 @@ class ReasonerService:
                     str(item.get("id", "")) for item in knowledge_items
                 ],
                 "evidence_count": len(evidences),
+                "suitability_score": suitability_result.total_score,
+                "suitability_grade": suitability_result.grade,
+                "rules_engine": ["pension_calculator", "eligibility", "suitability"],
             },
         )
         self.db.add(audit)
@@ -746,15 +815,19 @@ class ReasonerService:
         if parsed.get("cost_disclosure"):
             reasoning_chain.append({
                 "step": len(reasoning_chain) + 1,
+                "title": "Kostnadsinformation",
                 "description": "Kostnadsinformation (IDD-krav)",
                 "evidence_ids": [],
+                "cited_texts": [],
                 "conclusion": parsed["cost_disclosure"],
             })
         if parsed.get("conflict_disclosure"):
             reasoning_chain.append({
                 "step": len(reasoning_chain) + 1,
+                "title": "Intressekonflikter",
                 "description": "Intressekonfliktdisklosur (IDD-krav)",
                 "evidence_ids": [],
+                "cited_texts": [],
                 "conclusion": parsed["conflict_disclosure"],
             })
 
@@ -767,6 +840,7 @@ class ReasonerService:
             assumptions=parsed["assumptions"],
             scenarios=parsed.get("scenarios"),
             suitability_score=parsed.get("suitability_score"),
+            reasoning_metadata={"review_status": "pending"},
             created_by=user_id,
         )
         self.db.add(new_recommendation)

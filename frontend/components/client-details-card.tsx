@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import type { ClientResponse } from "@/lib/hooks"
 
 const riskColors: Record<string, { bg: string; text: string }> = {
@@ -19,24 +20,29 @@ function formatCurrency(amount: string) {
 export function ClientDetailsCard({ client }: ClientDetailsCardProps) {
   const riskColor = riskColors[client.risk_profile ?? ""]
 
-  const details: { label: string; value: string; badge?: boolean; badgeColor?: { bg: string; text: string } }[] = [
-    { label: "Employer", value: client.employer_name ?? "—" },
-    { label: "Collective Agreement", value: client.collective_agreement, badge: true },
-    { label: "Annual Income", value: client.annual_income ? formatCurrency(client.annual_income) : "—" },
+  const riskLabels: Record<string, string> = { low: "Låg", moderate: "Medel", high: "Hög" }
+  const employmentLabels: Record<string, string> = { employed: "Anställd", self_employed: "Egenföretagare", retired: "Pensionär", other: "Övrigt" }
+
+  const employerDisplay = client.client_organization_name ?? client.employer_name ?? "—"
+
+  const details: { label: string; value: string; badge?: boolean; badgeColor?: { bg: string; text: string }; link?: string }[] = [
+    { label: "Arbetsgivare", value: employerDisplay, link: client.client_organization_id ? `/organizations/${client.client_organization_id}` : undefined },
+    { label: "Kollektivavtal", value: client.collective_agreement, badge: true },
+    { label: "Årsinkomst", value: client.annual_income ? formatCurrency(client.annual_income) : "—" },
     {
-      label: "Monthly Income",
+      label: "Månadsinkomst",
       value: client.annual_income ? formatCurrency(String(Math.round(Number(client.annual_income) / 12))) : "—",
     },
-    { label: "Desired Retirement Age", value: client.desired_retirement_age?.toString() ?? "—" },
+    { label: "Önskad pensionsålder", value: client.desired_retirement_age?.toString() ?? "—" },
     {
-      label: "Risk Profile",
-      value: client.risk_profile ? client.risk_profile.charAt(0).toUpperCase() + client.risk_profile.slice(1) : "—",
+      label: "Riskprofil",
+      value: client.risk_profile ? riskLabels[client.risk_profile] ?? client.risk_profile : "—",
       badge: !!client.risk_profile,
       badgeColor: riskColor,
     },
     {
-      label: "Employment Status",
-      value: client.employment_status.charAt(0).toUpperCase() + client.employment_status.slice(1).replace("_", " "),
+      label: "Anställningsstatus",
+      value: employmentLabels[client.employment_status] ?? client.employment_status,
       badge: true,
     },
   ]
@@ -44,7 +50,7 @@ export function ClientDetailsCard({ client }: ClientDetailsCardProps) {
   return (
     <div className="rounded-xl border border-slate-200/60 bg-white p-6 shadow-sm">
       <h3 className="mb-4 text-xs font-medium uppercase tracking-wider text-slate-400">
-        Details
+        Detaljer
       </h3>
 
       <div className="grid grid-cols-2 gap-4">
@@ -63,6 +69,10 @@ export function ClientDetailsCard({ client }: ClientDetailsCardProps) {
               >
                 {item.value}
               </div>
+            ) : item.link ? (
+              <Link href={item.link} className="text-sm font-medium text-sky-600 hover:text-sky-700">
+                {item.value}
+              </Link>
             ) : (
               <p className="text-sm font-medium text-slate-900">{item.value}</p>
             )}

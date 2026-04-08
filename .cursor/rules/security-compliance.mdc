@@ -1,0 +1,17 @@
+---
+description: Security, privacy, and compliance rules
+alwaysApply: true
+---
+
+# Security & Compliance
+
+- Never log PII in plaintext
+- PII fields use `EncryptedString` (Fernet) at rest
+- Audit trail for every case/recommendation state change
+- All endpoints require auth (except health)
+- Multi-tenant isolation: org A never sees org B's data (return 404, not 403)
+- Rate limiting on LLM endpoints (`slowapi`)
+- Never commit `.env`, credentials, API keys, or PII
+- GDPR: data minimization, DPA with LLM providers
+- EU AI Act: human-in-the-loop, advisor reviews all recommendations
+- Deterministic services handle all financial calculations — LLM explains, doesn't compute

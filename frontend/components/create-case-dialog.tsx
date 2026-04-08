@@ -67,7 +67,7 @@ export function CreateCaseDialog({ defaultClientId, trigger, open: controlledOpe
       },
       {
         onSuccess: (data) => {
-          toast.success("Case created")
+          toast.success("Ärende skapat")
           resetForm()
           setOpen(false)
           router.push(`/cases/${data.id}`)
@@ -79,18 +79,18 @@ export function CreateCaseDialog({ defaultClientId, trigger, open: controlledOpe
   const dialogContent = (
     <DialogContent className="max-w-lg">
       <DialogHeader>
-        <DialogTitle>New Case</DialogTitle>
+        <DialogTitle>Nytt ärende</DialogTitle>
       </DialogHeader>
 
       <form onSubmit={handleSubmit} className="space-y-4 py-4">
         {/* Client Select */}
         <div>
           <Label htmlFor="client" className="mb-2 block text-sm font-medium text-slate-700">
-            Client
+            Klient
           </Label>
           <Select required value={clientId} onValueChange={setClientId}>
             <SelectTrigger id="client">
-              <SelectValue placeholder="Select a client..." />
+              <SelectValue placeholder="Välj klient..." />
             </SelectTrigger>
             <SelectContent>
               {(clients ?? []).map((c) => (
@@ -108,11 +108,11 @@ export function CreateCaseDialog({ defaultClientId, trigger, open: controlledOpe
         {/* Case Type Select */}
         <div>
           <Label htmlFor="caseType" className="mb-2 block text-sm font-medium text-slate-700">
-            Case Type
+            Ärendetyp
           </Label>
           <Select required value={caseType} onValueChange={setCaseType}>
             <SelectTrigger id="caseType">
-              <SelectValue placeholder="Select type..." />
+              <SelectValue placeholder="Välj typ..." />
             </SelectTrigger>
             <SelectContent>
               {Object.entries(caseTypeLabels).map(([val, label]) => (
@@ -125,14 +125,14 @@ export function CreateCaseDialog({ defaultClientId, trigger, open: controlledOpe
         {/* Title Input */}
         <div>
           <Label htmlFor="title" className="mb-2 block text-sm font-medium text-slate-700">
-            Title
+            Titel
           </Label>
           <Input
             id="title"
             required
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="Case title"
+            placeholder="Ärendetitel"
             className="rounded-lg border-slate-200"
           />
         </div>
@@ -140,13 +140,13 @@ export function CreateCaseDialog({ defaultClientId, trigger, open: controlledOpe
         {/* Summary Textarea */}
         <div>
           <Label htmlFor="summary" className="mb-2 block text-sm font-medium text-slate-700">
-            Summary
+            Sammanfattning
           </Label>
           <Textarea
             id="summary"
             value={summary}
             onChange={(e) => setSummary(e.target.value)}
-            placeholder="Brief description of the case..."
+            placeholder="Kort beskrivning av ärendet..."
             rows={3}
             className="rounded-lg border-slate-200"
           />
@@ -159,7 +159,7 @@ export function CreateCaseDialog({ defaultClientId, trigger, open: controlledOpe
             onClick={() => setOpen(false)}
             className="border-slate-200 text-slate-700"
           >
-            Cancel
+            Avbryt
           </Button>
           <Button
             type="submit"
@@ -167,7 +167,7 @@ export function CreateCaseDialog({ defaultClientId, trigger, open: controlledOpe
             disabled={createCase.isPending || !title || !caseType || !clientId}
           >
             {createCase.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Create Case
+            Skapa ärende
           </Button>
         </DialogFooter>
       </form>
@@ -188,7 +188,7 @@ export function CreateCaseDialog({ defaultClientId, trigger, open: controlledOpe
         {trigger ?? (
           <Button className="gap-2 bg-sky-500 text-white hover:bg-sky-600">
             <Plus className="h-4 w-4" />
-            New Case
+            Nytt ärende
           </Button>
         )}
       </DialogTrigger>

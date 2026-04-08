@@ -1,7 +1,9 @@
+from datetime import datetime, timezone
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import select, func
+from sqlalchemy.orm.attributes import flag_modified
 
 from app.api.deps import CurrentUser, DbSession, OrganizationId
 from app.models.case import Case
@@ -14,6 +16,8 @@ from app.schemas.recommendation import (
     RecommendationCreate,
     RecommendationUpdate,
     RecommendationResponse,
+    AnnotateStepRequest,
+    ReviewReasoningRequest,
 )
 
 router = APIRouter()
@@ -237,6 +241,129 @@ async def approve_recommendation(
         actor_id=current_user.id,
         actor_type=ActorType.USER,
         details={"recommendation_id": str(recommendation_id)},
+    )
+    db.add(audit)
+
+    await db.flush()
+    await db.refresh(recommendation)
+    return recommendation
+
+
+# ---------------------------------------------------------------------------
+# Reasoning trail annotation & review
+# ---------------------------------------------------------------------------
+
+
+async def _get_recommendation_for_org(
+    recommendation_id: UUID, db: DbSession, organization_id: UUID
+) -> Recommendation:
+    """Helper to load a recommendation scoped to an organization."""
+    result = await db.execute(
+        select(Recommendation)
+        .join(Case, Case.id == Recommendation.case_id)
+        .where(
+            Recommendation.id == recommendation_id,
+            Case.organization_id == organization_id,
+        )
+    )
+    recommendation = result.scalar_one_or_none()
+    if not recommendation:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Recommendation not found"
+        )
+    return recommendation
+
+
+@router.patch(
+    "/{recommendation_id}/reasoning/{step_number}/annotate",
+    response_model=RecommendationResponse,
+)
+async def annotate_reasoning_step(
+    recommendation_id: UUID,
+    step_number: int,
+    body: AnnotateStepRequest,
+    db: DbSession,
+    current_user: CurrentUser,
+    organization_id: OrganizationId,
+) -> Recommendation:
+    """Add an advisor annotation to a specific reasoning step."""
+    recommendation = await _get_recommendation_for_org(
+        recommendation_id, db, organization_id
+    )
+
+    chain = list(recommendation.reasoning_chain or [])
+    step_found = False
+    for step in chain:
+        if step.get("step") == step_number:
+            step["advisor_annotation"] = body.advisor_annotation
+            step["annotated_by"] = str(current_user.id)
+            step["annotated_at"] = datetime.now(timezone.utc).isoformat()
+            step_found = True
+            break
+
+    if not step_found:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Reasoning step {step_number} not found",
+        )
+
+    # Force JSONB column update (SQLAlchemy won't detect in-place mutation)
+    recommendation.reasoning_chain = chain
+    flag_modified(recommendation, "reasoning_chain")
+
+    audit = AuditEntry(
+        case_id=recommendation.case_id,
+        action=AuditAction.REASONING_ANNOTATED,
+        actor_id=current_user.id,
+        actor_type=ActorType.USER,
+        details={
+            "recommendation_id": str(recommendation_id),
+            "step": step_number,
+            "annotation": body.advisor_annotation[:500],
+        },
+    )
+    db.add(audit)
+
+    await db.flush()
+    await db.refresh(recommendation)
+    return recommendation
+
+
+@router.post(
+    "/{recommendation_id}/reasoning/review",
+    response_model=RecommendationResponse,
+)
+async def review_reasoning(
+    recommendation_id: UUID,
+    body: ReviewReasoningRequest,
+    db: DbSession,
+    current_user: CurrentUser,
+    organization_id: OrganizationId,
+) -> Recommendation:
+    """Mark the reasoning trail as reviewed by an advisor."""
+    recommendation = await _get_recommendation_for_org(
+        recommendation_id, db, organization_id
+    )
+
+    now = datetime.now(timezone.utc)
+    metadata = dict(recommendation.reasoning_metadata or {})
+    metadata["review_status"] = "reviewed"
+    metadata["reviewed_by"] = str(current_user.id)
+    metadata["reviewed_at"] = now.isoformat()
+    if body.comment:
+        metadata["review_comment"] = body.comment
+
+    recommendation.reasoning_metadata = metadata
+
+    audit = AuditEntry(
+        case_id=recommendation.case_id,
+        action=AuditAction.REASONING_REVIEWED,
+        actor_id=current_user.id,
+        actor_type=ActorType.USER,
+        details={
+            "recommendation_id": str(recommendation_id),
+            "review_comment": body.comment[:500] if body.comment else None,
+        },
     )
     db.add(audit)
 

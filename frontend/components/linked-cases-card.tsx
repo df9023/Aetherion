@@ -16,9 +16,9 @@ interface LinkedCasesCardProps {
 function timeAgo(dateStr: string) {
   const diff = Date.now() - new Date(dateStr).getTime()
   const days = Math.floor(diff / 86400000)
-  if (days === 0) return "Today"
-  if (days === 1) return "Yesterday"
-  return `${days} days ago`
+  if (days === 0) return "Idag"
+  if (days === 1) return "Igår"
+  return `${days} dagar sedan`
 }
 
 export function LinkedCasesCard({ cases, isLoading, createCaseButton }: LinkedCasesCardProps) {
@@ -26,7 +26,7 @@ export function LinkedCasesCard({ cases, isLoading, createCaseButton }: LinkedCa
     <div className="rounded-xl border border-slate-200/60 bg-white p-6 shadow-sm">
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-xs font-medium uppercase tracking-wider text-slate-400">
-          Linked Cases
+          Kopplade ärenden
         </h3>
         {createCaseButton}
       </div>
@@ -69,7 +69,7 @@ export function LinkedCasesCard({ cases, isLoading, createCaseButton }: LinkedCa
       {!isLoading && cases.length === 0 && (
         <div className="py-6 text-center">
           <Briefcase className="mx-auto mb-2 h-8 w-8 text-slate-300" />
-          <p className="text-sm text-slate-400">No cases yet</p>
+          <p className="text-sm text-slate-400">Inga ärenden ännu</p>
         </div>
       )}
     </div>
