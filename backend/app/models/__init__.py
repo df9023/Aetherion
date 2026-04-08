@@ -10,6 +10,8 @@ from app.models.knowledge_item import KnowledgeItem
 from app.models.document import Document
 from app.models.workflow import Workflow
 from app.models.firm_insight import FirmInsight
+from app.models.regulatory_change import RegulatoryChange
+from app.models.case_impact import CaseImpact
 
 __all__ = [
     "Organization",
@@ -24,4 +26,6 @@ __all__ = [
     "Document",
     "Workflow",
     "FirmInsight",
+    "RegulatoryChange",
+    "CaseImpact",
 ]

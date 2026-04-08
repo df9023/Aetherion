@@ -34,6 +34,15 @@ from app.schemas.firm_insight import (
     FirmInsightUpdate,
     FirmInsightResponse,
 )
+from app.schemas.regulatory_change import (
+    RegulatoryChangeCreate,
+    RegulatoryChangeUpdate,
+    RegulatoryChangeResponse,
+    CaseImpactResolve,
+    CaseImpactResponse,
+    ScanResult,
+    ComplianceHealthResponse,
+)
 
 __all__ = [
     "OrganizationCreate",
@@ -73,4 +82,11 @@ __all__ = [
     "FirmInsightCreate",
     "FirmInsightUpdate",
     "FirmInsightResponse",
+    "RegulatoryChangeCreate",
+    "RegulatoryChangeUpdate",
+    "RegulatoryChangeResponse",
+    "CaseImpactResolve",
+    "CaseImpactResponse",
+    "ScanResult",
+    "ComplianceHealthResponse",
 ]

@@ -17,11 +17,14 @@ import {
   AlertCircle,
   Bot,
   User,
+  Shield,
+  AlertTriangle,
 } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   useCases,
   useClients,
+  useComplianceHealth,
   useRecentAudit,
   type CaseResponse,
   type AuditEntryResponse,
@@ -31,6 +34,8 @@ import {
   statusStyles,
   caseTypeLabels,
   auditActionLabels,
+  regulatorySeverityLabels,
+  regulatorySeverityStyles,
 } from "@/lib/labels"
 import { CreateCaseDialog } from "@/components/create-case-dialog"
 import { CreateClientDialog } from "@/components/create-client-dialog"
@@ -175,6 +180,7 @@ export default function DashboardPage() {
   const { data: cases, isLoading: casesLoading } = useCases()
   const { data: clients } = useClients()
   const { data: recentAudit, isLoading: auditLoading } = useRecentAudit(10)
+  const { data: compliance, isLoading: complianceLoading } = useComplianceHealth()
 
   const [openCreateCase, setOpenCreateCase] = useState(false)
   const [openCreateClient, setOpenCreateClient] = useState(false)
@@ -520,6 +526,120 @@ export default function DashboardPage() {
 
           {/* Right column (2/5) */}
           <div className="space-y-6 lg:col-span-2">
+            {/* Regulatorisk status */}
+            <section className="rounded-xl border border-slate-200/60 bg-white shadow-sm">
+              <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+                <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+                  <Shield className="h-4 w-4 text-sky-500" />
+                  Regulatorisk status
+                </h2>
+                <Link
+                  href="/regulatory"
+                  className="flex items-center gap-1 text-sm text-sky-500 hover:text-sky-600"
+                >
+                  Öppna
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              </div>
+              {complianceLoading ? (
+                <div className="space-y-3 px-5 py-4">
+                  <Skeleton className="h-4 w-40" />
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-4 w-36" />
+                </div>
+              ) : compliance ? (
+                <div className="divide-y divide-slate-100">
+                  <div className="flex items-center justify-between px-5 py-3.5">
+                    <div className="flex items-center gap-3">
+                      <Briefcase className="h-4 w-4 text-slate-400" />
+                      <span className="text-sm text-slate-600">
+                        Aktiva ärenden
+                      </span>
+                    </div>
+                    <span className="text-sm font-semibold text-slate-900">
+                      {compliance.total_active_cases}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between px-5 py-3.5">
+                    <div className="flex items-center gap-3">
+                      <AlertTriangle
+                        className={cn(
+                          "h-4 w-4",
+                          compliance.total_open_impacts > 0
+                            ? "text-red-500"
+                            : "text-slate-400",
+                        )}
+                      />
+                      <span className="text-sm text-slate-600">
+                        Öppna påverkan
+                      </span>
+                    </div>
+                    <span
+                      className={cn(
+                        "text-sm font-semibold",
+                        compliance.total_open_impacts > 0
+                          ? "text-red-600"
+                          : "text-slate-900",
+                      )}
+                    >
+                      {compliance.total_open_impacts}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between px-5 py-3.5">
+                    <div className="flex items-center gap-3">
+                      <AlertCircle className="h-4 w-4 text-amber-400" />
+                      <span className="text-sm text-slate-600">
+                        Ärenden med påverkan
+                      </span>
+                    </div>
+                    <span className="text-sm font-semibold text-slate-900">
+                      {compliance.cases_with_open_impacts}
+                    </span>
+                  </div>
+
+                  {compliance.recent_changes.length > 0 && (
+                    <div className="px-5 py-3">
+                      <p className="mb-2 text-xs font-medium text-slate-500">
+                        Senaste ändringar
+                      </p>
+                      <div className="space-y-2">
+                        {compliance.recent_changes.slice(0, 3).map((c) => (
+                          <Link
+                            key={c.id}
+                            href="/regulatory"
+                            className="block rounded-lg border border-slate-100 px-3 py-2 transition-colors hover:bg-slate-50"
+                          >
+                            <div className="mb-1 flex items-center gap-2">
+                              <span
+                                className={cn(
+                                  "rounded-full px-1.5 py-0.5 text-[10px] font-medium",
+                                  regulatorySeverityStyles[c.severity],
+                                )}
+                              >
+                                {regulatorySeverityLabels[c.severity]}
+                              </span>
+                              {(c.open_impact_count ?? 0) > 0 && (
+                                <span className="rounded-full bg-red-50 px-1.5 py-0.5 text-[10px] font-semibold text-red-700">
+                                  {c.open_impact_count} öppna
+                                </span>
+                              )}
+                            </div>
+                            <p className="line-clamp-2 text-xs text-slate-700">
+                              {c.title}
+                            </p>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="px-5 py-6 text-center text-sm text-slate-400">
+                  Ingen data
+                </div>
+              )}
+            </section>
+
             {/* Upcoming meetings */}
             <section className="rounded-xl border border-slate-200/60 bg-white shadow-sm">
               <div className="border-b border-slate-100 px-5 py-4">

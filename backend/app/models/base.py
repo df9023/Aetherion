@@ -107,11 +107,29 @@ class AuditAction(str, enum.Enum):
     CLIENT_DATA_APPLIED = "client_data_applied"
     KNOWLEDGE_INGESTED = "knowledge_ingested"
     INSIGHT_CREATED = "insight_created"
+    REGULATORY_CHANGE_CREATED = "regulatory_change_created"
+    IMPACT_SCAN_COMPLETED = "impact_scan_completed"
+    IMPACT_RESOLVED = "impact_resolved"
+    IMPACT_ACKNOWLEDGED = "impact_acknowledged"
 
 
 class ActorType(str, enum.Enum):
     USER = "user"
     SYSTEM = "system"
+
+
+class RegulatoryChangeSeverity(str, enum.Enum):
+    CRITICAL = "critical"
+    HIGH = "high"
+    MEDIUM = "medium"
+    LOW = "low"
+
+
+class CaseImpactStatus(str, enum.Enum):
+    OPEN = "open"
+    ACKNOWLEDGED = "acknowledged"
+    RESOLVED = "resolved"
+    NOT_APPLICABLE = "not_applicable"
 
 
 class FirmInsightCategory(str, enum.Enum):

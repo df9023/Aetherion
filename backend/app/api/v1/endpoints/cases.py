@@ -2,16 +2,19 @@ import logging
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Request, status
-from sqlalchemy import select
+from sqlalchemy import desc, select
+from sqlalchemy.orm import selectinload
 
 from app.api.deps import CurrentUser, DbSession, OrganizationId
 from app.config import get_settings
 from app.models.case import Case
+from app.models.case_impact import CaseImpact
 from app.models.client import Client
 from app.models.audit_entry import AuditEntry
 from app.models.base import (
     AuditAction,
     ActorType,
+    CaseImpactStatus,
     CaseType,
     RecommendationType,
 )
@@ -19,6 +22,7 @@ from app.models.recommendation import Recommendation
 from app.schemas.case import CaseCreate, CaseUpdate, CaseResponse
 from app.schemas.audit_entry import AuditEntryResponse
 from app.schemas.recommendation import GenerateRecommendationRequest, RecommendationResponse
+from app.schemas.regulatory_change import CaseImpactResponse
 from app.rate_limit import limiter
 from app.services.memory import MemoryService
 from app.services.reasoner import ReasonerService
@@ -132,6 +136,36 @@ async def get_case_audit_trail(
         select(AuditEntry)
         .where(AuditEntry.case_id == case_id)
         .order_by(AuditEntry.timestamp.desc())
+    )
+    return list(result.scalars().all())
+
+
+@router.get("/{case_id}/impacts", response_model=list[CaseImpactResponse])
+async def list_case_impacts(
+    case_id: UUID,
+    db: DbSession,
+    current_user: CurrentUser,
+    organization_id: OrganizationId,
+) -> list[CaseImpact]:
+    """List regulatory change impacts that affect this case."""
+    case_result = await db.execute(
+        select(Case).where(Case.id == case_id, Case.organization_id == organization_id)
+    )
+    if not case_result.scalar_one_or_none():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Case not found")
+
+    result = await db.execute(
+        select(CaseImpact)
+        .options(
+            selectinload(CaseImpact.regulatory_change),
+            selectinload(CaseImpact.case),
+            selectinload(CaseImpact.resolver),
+        )
+        .where(
+            CaseImpact.case_id == case_id,
+            CaseImpact.organization_id == organization_id,
+        )
+        .order_by(desc(CaseImpact.created_at))
     )
     return list(result.scalars().all())
 

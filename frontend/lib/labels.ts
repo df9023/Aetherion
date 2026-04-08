@@ -89,12 +89,45 @@ export const auditActionLabels: Record<string, string> = {
   client_data_applied: "Klientdata uppdaterad från dokument",
   knowledge_ingested: "Kunskapsdokument inhämtat",
   insight_created: "Firmainsikt skapad",
+  regulatory_change_created: "Regulatorisk ändring registrerad",
+  impact_scan_completed: "Påverkansanalys genomförd",
+  impact_resolved: "Påverkan åtgärdad",
+  impact_acknowledged: "Påverkan bekräftad",
 }
 
 export const severityLabels: Record<string, string> = {
+  critical: "Kritisk",
   high: "Hög",
   medium: "Medel",
   low: "Låg",
+}
+
+export const regulatorySeverityLabels: Record<string, string> = {
+  critical: "Kritisk",
+  high: "Hög",
+  medium: "Medel",
+  low: "Låg",
+}
+
+export const regulatorySeverityStyles: Record<string, string> = {
+  critical: "bg-red-50 text-red-700 border border-red-200",
+  high: "bg-orange-50 text-orange-700 border border-orange-200",
+  medium: "bg-amber-50 text-amber-700 border border-amber-200",
+  low: "bg-slate-100 text-slate-600 border border-slate-200",
+}
+
+export const caseImpactStatusLabels: Record<string, string> = {
+  open: "Öppen",
+  acknowledged: "Bekräftad",
+  resolved: "Åtgärdad",
+  not_applicable: "Ej tillämplig",
+}
+
+export const caseImpactStatusStyles: Record<string, string> = {
+  open: "bg-red-50 text-red-700 border border-red-200",
+  acknowledged: "bg-amber-50 text-amber-700 border border-amber-200",
+  resolved: "bg-emerald-50 text-emerald-700 border border-emerald-200",
+  not_applicable: "bg-slate-100 text-slate-600 border border-slate-200",
 }
 
 export const agreementLabels: Record<string, string> = {

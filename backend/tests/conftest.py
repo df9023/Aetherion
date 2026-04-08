@@ -64,6 +64,8 @@ _CLEANUP_TABLES = [
     "evidences",
     "documents",
     "recommendations",
+    "case_impacts",
+    "regulatory_changes",
     "firm_insights",
     "audit_entries",
     "workflows",

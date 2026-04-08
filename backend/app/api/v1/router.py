@@ -11,6 +11,7 @@ from app.api.v1.endpoints import (
     health,
     knowledge,
     recommendations,
+    regulatory_changes,
 )
 
 api_router = APIRouter()
@@ -30,6 +31,11 @@ api_router.include_router(
 api_router.include_router(knowledge.router, prefix="/knowledge", tags=["knowledge"])
 api_router.include_router(
     firm_insights.router, prefix="/firm-insights", tags=["firm-insights"]
+)
+api_router.include_router(
+    regulatory_changes.router,
+    prefix="/regulatory-changes",
+    tags=["regulatory-changes"],
 )
 api_router.include_router(dashboard.router, tags=["dashboard"])
 # Documents: generate-document lives under /recommendations/{id}/generate-document,

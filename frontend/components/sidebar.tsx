@@ -2,9 +2,16 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, Briefcase, Users, Building2, BookOpen, Lightbulb, LogOut } from "lucide-react"
+import { LayoutDashboard, Briefcase, Users, Building2, BookOpen, Lightbulb, Shield, LogOut } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useCases, useClients, useClientOrganizations, useKnowledge, useFirmInsights } from "@/lib/hooks"
+import {
+  useCases,
+  useClients,
+  useClientOrganizations,
+  useKnowledge,
+  useFirmInsights,
+  useRegulatoryChanges,
+} from "@/lib/hooks"
 
 export function Sidebar() {
   const pathname = usePathname()
@@ -13,6 +20,7 @@ export function Sidebar() {
   const { data: clientOrgs } = useClientOrganizations()
   const { data: knowledge } = useKnowledge()
   const { data: insights } = useFirmInsights()
+  const { data: regChanges } = useRegulatoryChanges({ is_active: "true" })
 
   const navItems = [
     { href: "/dashboard", icon: LayoutDashboard, label: "Översikt" },
@@ -21,6 +29,7 @@ export function Sidebar() {
     { href: "/organizations", icon: Building2, label: "Organisationer", badge: clientOrgs?.length },
     { href: "/knowledge", icon: BookOpen, label: "Kunskapsbas", badge: knowledge?.length },
     { href: "/insights", icon: Lightbulb, label: "Insikter", badge: insights?.length },
+    { href: "/regulatory", icon: Shield, label: "Regulatorisk pulse", badge: regChanges?.length },
   ]
 
   return (

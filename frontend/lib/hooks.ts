@@ -707,3 +707,236 @@ export function useDeleteFirmInsight() {
     },
   })
 }
+
+// Regulatory Pulse
+export type RegulatoryChangeSeverity = "critical" | "high" | "medium" | "low"
+export type CaseImpactStatus =
+  | "open"
+  | "acknowledged"
+  | "resolved"
+  | "not_applicable"
+
+export interface RegulatoryChangeResponse {
+  id: string
+  organization_id: string
+  created_by: string | null
+  creator_name: string | null
+  title: string
+  description: string
+  source: string
+  source_url: string | null
+  severity: RegulatoryChangeSeverity
+  affected_case_types: string[]
+  affected_agreements: string[]
+  affected_tags: string[]
+  knowledge_item_id: string | null
+  knowledge_item_title: string | null
+  is_active: boolean
+  published_at: string
+  created_at: string
+  updated_at: string
+  impact_count: number | null
+  open_impact_count: number | null
+}
+
+export interface CaseImpactResponse {
+  id: string
+  organization_id: string
+  regulatory_change_id: string
+  regulatory_change_title: string | null
+  regulatory_change_severity: RegulatoryChangeSeverity | null
+  case_id: string
+  case_title: string | null
+  case_status: string | null
+  match_reason: string
+  affected_sections: string[]
+  status: CaseImpactStatus
+  resolved_by: string | null
+  resolver_name: string | null
+  resolved_at: string | null
+  resolution_note: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface ScanResult {
+  regulatory_change_id: string
+  new_impacts: number
+  skipped_existing: number
+  total_matched_cases: number
+  impacts: CaseImpactResponse[]
+}
+
+export interface ComplianceHealthResponse {
+  total_active_cases: number
+  cases_with_open_impacts: number
+  total_open_impacts: number
+  impacts_by_severity: Record<string, number>
+  recent_changes: RegulatoryChangeResponse[]
+}
+
+export interface RegulatoryChangeCreateInput {
+  title: string
+  description: string
+  source: string
+  source_url?: string | null
+  severity: RegulatoryChangeSeverity
+  affected_case_types?: string[]
+  affected_agreements?: string[]
+  affected_tags?: string[]
+  knowledge_item_id?: string | null
+  published_at?: string | null
+}
+
+export function useRegulatoryChanges(filters?: Record<string, string>) {
+  const params = new URLSearchParams()
+  if (filters) {
+    for (const [key, value] of Object.entries(filters)) {
+      if (value) params.set(key, value)
+    }
+  }
+  const qs = params.toString()
+  return useQuery({
+    queryKey: ["regulatory-changes", filters ?? {}],
+    queryFn: () =>
+      apiFetch<RegulatoryChangeResponse[]>(
+        qs ? `/regulatory-changes?${qs}` : "/regulatory-changes",
+      ),
+  })
+}
+
+export function useRegulatoryChange(id: string | undefined) {
+  return useQuery({
+    queryKey: ["regulatory-changes", id],
+    queryFn: () =>
+      apiFetch<RegulatoryChangeResponse>(`/regulatory-changes/${id}`),
+    enabled: !!id,
+  })
+}
+
+export function useCreateRegulatoryChange() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (data: RegulatoryChangeCreateInput) =>
+      apiFetch<RegulatoryChangeResponse>("/regulatory-changes", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["regulatory-changes"] })
+      queryClient.invalidateQueries({ queryKey: ["compliance-health"] })
+    },
+  })
+}
+
+export function useScanRegulatoryChange() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (changeId: string) =>
+      apiFetch<ScanResult>(`/regulatory-changes/${changeId}/scan`, {
+        method: "POST",
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["regulatory-changes"] })
+      queryClient.invalidateQueries({ queryKey: ["case-impacts"] })
+      queryClient.invalidateQueries({ queryKey: ["compliance-health"] })
+    },
+  })
+}
+
+export function useDeleteRegulatoryChange() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (changeId: string) =>
+      apiFetch<void>(`/regulatory-changes/${changeId}`, {
+        method: "DELETE",
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["regulatory-changes"] })
+      queryClient.invalidateQueries({ queryKey: ["compliance-health"] })
+    },
+  })
+}
+
+export function useCaseImpacts(caseId: string | undefined) {
+  return useQuery({
+    queryKey: ["case-impacts", caseId],
+    queryFn: () =>
+      apiFetch<CaseImpactResponse[]>(`/cases/${caseId}/impacts`),
+    enabled: !!caseId,
+  })
+}
+
+export function useResolveCaseImpact() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      impactId,
+      resolutionNote,
+    }: {
+      impactId: string
+      resolutionNote?: string
+    }) =>
+      apiFetch<CaseImpactResponse>(
+        `/regulatory-changes/case-impacts/${impactId}/resolve`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({ resolution_note: resolutionNote ?? null }),
+        },
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["regulatory-changes"] })
+      queryClient.invalidateQueries({ queryKey: ["case-impacts"] })
+      queryClient.invalidateQueries({ queryKey: ["compliance-health"] })
+    },
+  })
+}
+
+export function useAcknowledgeCaseImpact() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (impactId: string) =>
+      apiFetch<CaseImpactResponse>(
+        `/regulatory-changes/case-impacts/${impactId}/acknowledge`,
+        { method: "PATCH" },
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["regulatory-changes"] })
+      queryClient.invalidateQueries({ queryKey: ["case-impacts"] })
+      queryClient.invalidateQueries({ queryKey: ["compliance-health"] })
+    },
+  })
+}
+
+export function useMarkImpactNotApplicable() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      impactId,
+      resolutionNote,
+    }: {
+      impactId: string
+      resolutionNote?: string
+    }) =>
+      apiFetch<CaseImpactResponse>(
+        `/regulatory-changes/case-impacts/${impactId}/not-applicable`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({ resolution_note: resolutionNote ?? null }),
+        },
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["regulatory-changes"] })
+      queryClient.invalidateQueries({ queryKey: ["case-impacts"] })
+      queryClient.invalidateQueries({ queryKey: ["compliance-health"] })
+    },
+  })
+}
+
+export function useComplianceHealth() {
+  return useQuery({
+    queryKey: ["compliance-health"],
+    queryFn: () =>
+      apiFetch<ComplianceHealthResponse>("/dashboard/compliance-health"),
+  })
+}

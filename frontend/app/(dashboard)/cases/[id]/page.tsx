@@ -28,6 +28,7 @@ import { KnowledgeBaseCard } from "@/components/knowledge-base-card"
 import { AuditTrailCard } from "@/components/audit-trail-card"
 import { FirmInsightsCard } from "@/components/firm-insights-card"
 import { FirmInsightDialog } from "@/components/firm-insight-dialog"
+import { CaseImpactBanner } from "@/components/case-impact-banner"
 import { Lightbulb } from "lucide-react"
 
 function useDebounced(value: string, delay: number) {
@@ -175,6 +176,7 @@ export default function CaseDetailPage({ params }: { params: Promise<{ id: strin
       <main className="flex flex-1 flex-col gap-5 px-6 py-6 lg:flex-row">
         {/* Left column */}
         <div className="flex min-w-0 flex-1 flex-col gap-5">
+          <CaseImpactBanner caseId={id} />
           {caseData.status === "completed" && (
             <div className="flex items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-5 py-3">
               <div className="flex items-center gap-2">
